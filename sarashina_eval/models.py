@@ -24,8 +24,8 @@ MODEL_RPM: dict[str, int] = {
 class Endpoint(str, Enum):
     """API のエンドポイントのパス（``BASE_URL`` からの相対）。
 
-    今回使うのは ``CHAT`` だけ。ほかは後で足すときの置き場として持つ。
-    パスは公式の文書で確かめてから使うこと。
+    パスは公式の API リファレンス（2026-10-13 に確認）による。
+    Translate は ``model`` の指定が不要で、渡しても無視される（sarashina3-translate が使われる）。
     """
 
     CHAT = "/chat/completions"

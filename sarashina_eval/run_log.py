@@ -76,8 +76,10 @@ def recent_sends(
     return out
 
 
-def completed_attempts(log_dir: Path, run_id: str) -> set[tuple[str | None, int]]:
-    """``run_id`` で HTTP 200 が記録済みの ``(question_id, attempt)`` を集める。
+def completed_attempts(log_dir: Path, run_id: str) -> set[tuple[str | None, str | None, int]]:
+    """``run_id`` で HTTP 200 が記録済みの ``(model, question_id, attempt)`` を集める。
+
+    同じ設問を複数のモデルに送るので、モデルも鍵に含める。
 
     Parameters
     ----------
@@ -89,10 +91,11 @@ def completed_attempts(log_dir: Path, run_id: str) -> set[tuple[str | None, int]
     Returns
     -------
     set of tuple
-        済んだ ``(question_id, attempt)`` の集合。
+        済んだ ``(model, question_id, attempt)`` の集合。
     """
-    done: set[tuple[str | None, int]] = set()
+    done: set[tuple[str | None, str | None, int]] = set()
     for rec in iter_records(log_dir):
         if rec.get("run_id") == run_id and (rec.get("response") or {}).get("status") == 200:
-            done.add((rec.get("question_id"), int(rec.get("attempt", 1))))
+            model = ((rec.get("request") or {}).get("body") or {}).get("model")
+            done.add((model, rec.get("question_id"), int(rec.get("attempt", 1))))
     return done

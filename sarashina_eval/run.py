@@ -30,6 +30,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--category", choices=sorted(CATEGORIES), action="append", help="分野で絞る（複数可）")
     p.add_argument("--dry-run", action="store_true", help="送る要求と所要時間の見積もりを出し、送らない")
     p.add_argument("--log-dir", type=Path, default=None, help="記録の置き場（既定は logs/）")
+    p.add_argument("--resume", metavar="RUN_ID", default=None,
+                   help="この run_id の実行を再開し、HTTP 200 で済んだ (モデル, 設問) を送らない")
     return p
 
 
@@ -64,8 +66,8 @@ def main(argv: list[str] | None = None) -> int:
     # 実際に送るときだけ client を作る（API キーを読むのはここだけ）。
     from sarashina_eval.client import SarashinaClient
 
-    client = SarashinaClient(log_dir=args.log_dir)
-    records = run_plan(client, plan)
+    client = SarashinaClient(log_dir=args.log_dir, run_id=args.resume)
+    records = run_plan(client, plan, should_skip=lambda model, qid: client.is_completed(model, qid))
     print(f"送信 {len(records)} 件、run_id={client.run_id}")
     return 0
 

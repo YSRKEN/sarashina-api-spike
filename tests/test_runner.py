@@ -209,6 +209,18 @@ class CliTest(unittest.TestCase):
         self.assertIn("sarashina3-mini    3 件 / 6 RPM -> 約 0 秒", text)
         self.assertEqual(text, format_dry_run(plan_requests(load_questions([SAMPLE]))) + "\n")
 
+    def test_resume_reuses_run_id_and_skips_completed(self) -> None:
+        out = io.StringIO()
+        with mock.patch("sarashina_eval.client.SarashinaClient") as client_cls, \
+                mock.patch.object(run_cli, "run_plan", return_value=[]) as run_plan_mock, \
+                redirect_stdout(out):
+            code = run_cli.main([str(SAMPLE), "--resume", "run-X"])
+        self.assertEqual(code, 0)
+        self.assertEqual(client_cls.call_args.kwargs["run_id"], "run-X")
+        skip = run_plan_mock.call_args.kwargs["should_skip"]
+        skip("sarashina3-mini", "math-001")
+        client_cls.return_value.is_completed.assert_called_once_with("sarashina3-mini", "math-001")
+
     def test_broken_file_exits_2_with_line_number(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "x.jsonl"

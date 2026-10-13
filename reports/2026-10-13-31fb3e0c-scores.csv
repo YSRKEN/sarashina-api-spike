@@ -1,0 +1,7 @@
+category,sarashina3-mini:accuracy,sarashina3-mini:answers,sarashina3-mini:all_correct,sarashina3-mini:partial,sarashina3-mini:none_correct,sarashina3-mini:ungraded,sarashina3-nano:accuracy,sarashina3-nano:answers,sarashina3-nano:all_correct,sarashina3-nano:partial,sarashina3-nano:none_correct,sarashina3-nano:ungraded
+code,0.933,30,9,1,0,0,0.933,30,8,2,0,0
+instruction,0.800,30,7,2,1,0,0.733,30,7,1,2,0
+japanese,,0,0,0,0,10,,0,0,0,0,10
+knowledge,,0,0,0,0,11,,0,0,0,0,11
+logic,0.767,30,7,1,2,0,0.867,30,8,2,0,0
+math,0.667,30,6,2,2,0,1.000,30,10,0,0,0

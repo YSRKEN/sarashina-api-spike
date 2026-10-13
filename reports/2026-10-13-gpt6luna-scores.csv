@@ -1,0 +1,7 @@
+category,gpt-6-luna-low:accuracy,gpt-6-luna-low:answers,gpt-6-luna-low:all_correct,gpt-6-luna-low:partial,gpt-6-luna-low:none_correct,gpt-6-luna-low:ungraded
+code,1.000,10,10,0,0,0
+instruction,1.000,10,10,0,0,0
+japanese,,0,0,0,0,10
+knowledge,,0,0,0,0,11
+logic,0.800,10,8,0,2,0
+math,0.900,10,9,0,1,0

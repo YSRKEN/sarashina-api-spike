@@ -12,7 +12,17 @@ from pathlib import Path
 from typing import Any
 
 from sarashina_eval.clock import Clock, SystemClock
-from sarashina_eval.models import BASE_URL, MODEL_RPM, Endpoint
+from sarashina_eval.models import (
+    BASE_URL,
+    EMBEDDING_MODEL,
+    EMBEDDING_TASK_TYPES,
+    MODEL_RPM,
+    RERANK_MODEL,
+    RERANK_TASK_TYPES,
+    TRANSLATE_MAX_CHARS,
+    TRANSLATE_MODEL,
+    Endpoint,
+)
 from sarashina_eval.rate_limiter import RateLimiter
 from sarashina_eval.run_log import completed_attempts, recent_sends
 
@@ -179,6 +189,143 @@ class SarashinaClient:
         """
         body = {"model": model, "messages": messages, **params}
         return self._send(Endpoint.CHAT, model, body, question_id=question_id, attempt=attempt)
+
+    def embeddings(
+        self,
+        text: str,
+        task_type: str,
+        *,
+        model: str = EMBEDDING_MODEL,
+        question_id: str | None = None,
+        attempt: int = 1,
+    ) -> dict[str, Any]:
+        """Embeddings（``POST /embeddings``）に 1 テキストを送り、記録を返す。
+
+        Parameters
+        ----------
+        text : str
+            ベクトルにするテキスト（1 リクエスト 1 テキスト。配列は送れない）。
+        task_type : str
+            ``EMBEDDING_TASK_TYPES`` のいずれか（必須）。
+        model : str, optional
+            既定は ``sarashina3-embedding``。
+        question_id : str, optional
+            記録用の識別子。
+        attempt : int, optional
+            同じ識別子への何回目の送信か。
+
+        Returns
+        -------
+        dict
+            JSONL に書いたものと同じ記録。
+
+        Raises
+        ------
+        ValueError
+            ``text`` が文字列でないか、``task_type`` が一覧に無いとき（送らない）。
+        """
+        if not isinstance(text, str):
+            raise ValueError("embeddings の text は文字列 1 つだけ")
+        if task_type not in EMBEDDING_TASK_TYPES:
+            raise ValueError(f"embeddings の task_type が不正: {task_type!r}")
+        body = {"model": model, "input": text, "task_type": task_type}
+        return self._send(Endpoint.EMBEDDINGS, model, body, question_id=question_id, attempt=attempt)
+
+    def rerank(
+        self,
+        query: str,
+        documents: list[str],
+        *,
+        task_type: str | None = None,
+        query_instruction: str | None = None,
+        model: str = RERANK_MODEL,
+        question_id: str | None = None,
+        attempt: int = 1,
+    ) -> dict[str, Any]:
+        """Rerank（``POST /rerank``）に送り、記録を返す。
+
+        Parameters
+        ----------
+        query : str
+            クエリ。
+        documents : list of str
+            並べ替える文書（1〜20 件）。
+        task_type : str, optional
+            ``RERANK_TASK_TYPES`` のいずれか。省略時は送らない（API 側の既定 ``GENERAL_RETRIEVAL``）。
+        query_instruction : str, optional
+            ``task_type`` が ``CUSTOMIZE`` のときの指示文（そのときは必須）。
+        model : str, optional
+            既定は ``sarashina3-rerank``。
+        question_id : str, optional
+            記録用の識別子。
+        attempt : int, optional
+            同じ識別子への何回目の送信か。
+
+        Returns
+        -------
+        dict
+            JSONL に書いたものと同じ記録。
+
+        Raises
+        ------
+        ValueError
+            文書の件数・``task_type``・``query_instruction`` が不正なとき（送らない）。
+        """
+        if not 1 <= len(documents) <= 20:
+            raise ValueError(f"rerank の documents は 1〜20 件（指定は {len(documents)} 件）")
+        if task_type is not None and task_type not in RERANK_TASK_TYPES:
+            raise ValueError(f"rerank の task_type が不正: {task_type!r}")
+        if task_type == "CUSTOMIZE" and not query_instruction:
+            raise ValueError("rerank の task_type が CUSTOMIZE なら query_instruction が要る")
+        body: dict[str, Any] = {"model": model, "query": query, "documents": list(documents)}
+        if task_type is not None:
+            body["task_type"] = task_type
+        if query_instruction is not None:
+            body["query_instruction"] = query_instruction
+        return self._send(Endpoint.RERANK, model, body, question_id=question_id, attempt=attempt)
+
+    def translate(
+        self,
+        text: str,
+        source_lang: str,
+        target_lang: str,
+        *,
+        question_id: str | None = None,
+        attempt: int = 1,
+    ) -> dict[str, Any]:
+        """Translate（``POST /translate``）に送り、記録を返す。
+
+        API は ``model`` を無視するが、窓の数え直しと済みの判定が記録の ``request.body.model``
+        を見るので、本文に ``"model": "sarashina3-translate"`` を必ず入れる。
+
+        Parameters
+        ----------
+        text : str
+            訳す文（5,000 コードポイントまで）。
+        source_lang, target_lang : str
+            ``ja`` か ``en``。同じ言語は不可。
+        question_id : str, optional
+            記録用の識別子。
+        attempt : int, optional
+            同じ識別子への何回目の送信か。
+
+        Returns
+        -------
+        dict
+            JSONL に書いたものと同じ記録。
+
+        Raises
+        ------
+        ValueError
+            言語の指定か文字数が不正なとき（送らない）。
+        """
+        langs = {"ja", "en"}
+        if source_lang not in langs or target_lang not in langs or source_lang == target_lang:
+            raise ValueError(f"translate の言語は ja と en の組だけ（{source_lang}->{target_lang}）")
+        if len(text) > TRANSLATE_MAX_CHARS:
+            raise ValueError(f"translate の text は {TRANSLATE_MAX_CHARS} 文字まで（{len(text)} 文字）")
+        body = {"model": TRANSLATE_MODEL, "text": text, "source_lang": source_lang, "target_lang": target_lang}
+        return self._send(Endpoint.TRANSLATE, TRANSLATE_MODEL, body, question_id=question_id, attempt=attempt)
 
     def _send(
         self,

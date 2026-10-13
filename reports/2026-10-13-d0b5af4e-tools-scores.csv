@@ -1,0 +1,17 @@
+model,scenario_id,condition,status,passed,rounds,truncated,n_calls,called_expected,args_json_ok,args_match,unexpected_calls,facts_found,facts_total
+sarashina3-mini,tool-error-city,omit,ok,0,5,1,5,1,1,1,0,0,1
+sarashina3-mini,tool-error-url,omit,ok,0,5,1,5,1,1,1,0,0,1
+sarashina3-mini,tool-fetch-extract,omit,ok,0,5,1,5,1,1,1,0,0,3
+sarashina3-mini,tool-fetch-summary,omit,ok,0,5,1,5,1,1,1,0,0,2
+sarashina3-mini,tool-not-needed,omit,ok,0,5,1,5,0,1,0,5,0,1
+sarashina3-mini,tool-weather-and-fetch,omit,ok,0,5,1,10,1,1,1,0,0,4
+sarashina3-mini,tool-weather-calc,omit,ok,0,5,1,5,1,1,1,0,0,1
+sarashina3-mini,tool-weather-single,omit,ok,0,5,1,5,1,1,1,0,0,2
+sarashina3-nano,tool-error-city,omit,ok,0,5,1,6,1,1,1,0,0,1
+sarashina3-nano,tool-error-url,omit,ok,0,5,1,9,1,1,1,0,0,1
+sarashina3-nano,tool-fetch-extract,omit,ok,0,5,1,14,1,1,1,0,0,3
+sarashina3-nano,tool-fetch-summary,omit,ok,0,5,1,5,1,1,1,0,0,2
+sarashina3-nano,tool-not-needed,omit,ok,0,5,1,9,0,1,0,9,0,1
+sarashina3-nano,tool-weather-and-fetch,omit,ok,0,3,0,2,1,1,1,0,0,4
+sarashina3-nano,tool-weather-calc,omit,ok,0,5,1,5,1,1,1,0,0,1
+sarashina3-nano,tool-weather-single,omit,ok,0,5,1,6,1,1,1,0,0,2

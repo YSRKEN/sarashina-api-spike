@@ -1,0 +1,4 @@
+category,sarashina3-mini:accuracy,sarashina3-mini:answers,sarashina3-mini:all_correct,sarashina3-mini:partial,sarashina3-mini:none_correct,sarashina3-mini:ungraded,sarashina3-nano:accuracy,sarashina3-nano:answers,sarashina3-nano:all_correct,sarashina3-nano:partial,sarashina3-nano:none_correct,sarashina3-nano:ungraded
+instruction,1.000,3,1,0,0,0,1.000,3,1,0,0,0
+logic,0.000,3,0,0,1,0,0.000,3,0,0,1,0
+math,1.000,3,1,0,0,0,1.000,3,1,0,0,0

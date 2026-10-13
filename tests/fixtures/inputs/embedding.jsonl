@@ -1,0 +1,2 @@
+{"id": "emb-tmp-01", "aim": "仮: 同じ意味の言い換えが別話題より近いか", "anchor": "今日はとても暑い。", "near": ["本日は気温が高い。"], "far": ["彼はピアノを弾く。"], "task_type": "SEMANTIC_SIMILARITY"}
+{"id": "emb-tmp-02", "aim": "仮: 質問に答える文書が無関係な文書より近いか", "anchor": "富士山の高さは？", "near": ["富士山の標高は3776メートルです。"], "far": ["東京駅は1914年に開業した。", "猫は一日の多くを寝て過ごす。"], "task_type": "RETRIEVAL_QUERY", "candidate_task_type": "RETRIEVAL_DOCUMENT"}

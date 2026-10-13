@@ -38,6 +38,8 @@ from sarashina_eval.run_log import completed_attempts, recent_sends
 FAKE_KEY = "test-key-not-real"
 START = 1_800_000_000.0
 REPO_INPUTS = Path(__file__).resolve().parent.parent / "inputs"
+# 件数や中身を決め打ちするテストは、本物の入力ではなくテスト専用の見本を読む。
+FIXTURE_INPUTS = Path(__file__).resolve().parent / "fixtures" / "inputs"
 
 #: 偽のベクトル: 文に「暑」「気温」「富士山」が入れば近い向き、それ以外は直交する向き。
 def _fake_vector(text: str) -> list[float]:
@@ -274,7 +276,7 @@ class CasesTest(unittest.TestCase):
                 load_cases([self._write("inputs", kind, [row])], [kind])
 
     def test_plan_and_estimate(self) -> None:
-        plan = plan_calls(load_cases([REPO_INPUTS]))
+        plan = plan_calls(load_cases([FIXTURE_INPUTS]))
         ids = [c.question_id for c in plan if c.kind == "embedding"]
         self.assertEqual(ids, ["emb-tmp-01:anchor", "emb-tmp-01:near0", "emb-tmp-01:far0",
                                "emb-tmp-02:anchor", "emb-tmp-02:near0", "emb-tmp-02:far0", "emb-tmp-02:far1"])
@@ -289,7 +291,7 @@ class CasesTest(unittest.TestCase):
     def test_dry_run_does_not_send(self) -> None:
         out = io.StringIO()
         with mock.patch.object(client_mod, "SarashinaClient") as cls, contextlib.redirect_stdout(out):
-            code = non_chat.main(["run", "--dry-run", "--inputs", str(REPO_INPUTS)])
+            code = non_chat.main(["run", "--dry-run", "--inputs", str(FIXTURE_INPUTS)])
         self.assertEqual(code, 0)
         cls.assert_not_called()
         self.assertIn("送る要求 13 件", out.getvalue())
@@ -303,7 +305,7 @@ class EndToEndTest(_ServerCase):
         factory = functools.partial(SarashinaClient, FAKE_KEY, base_url=self.base_url, clock=self.clock)
         out = io.StringIO()
         with mock.patch.object(client_mod, "SarashinaClient", factory), contextlib.redirect_stdout(out):
-            code = non_chat.main([*argv, "--inputs", str(REPO_INPUTS), "--log-dir", str(self.log_dir)])
+            code = non_chat.main([*argv, "--inputs", str(FIXTURE_INPUTS), "--log-dir", str(self.log_dir)])
         return code, out.getvalue()
 
     def test_run_score_and_resume(self) -> None:
@@ -338,7 +340,7 @@ class EndToEndTest(_ServerCase):
         self.assertEqual(len(rows), 8)
 
     def test_missing_records(self) -> None:
-        cases = load_cases([REPO_INPUTS], ["rerank"])
+        cases = load_cases([FIXTURE_INPUTS], ["rerank"])
         scores = score_cases(self.log_dir, "nothing", cases)
         self.assertEqual({s.status for s in scores}, {MISSING})
 

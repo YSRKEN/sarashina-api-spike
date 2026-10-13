@@ -211,11 +211,19 @@ class CliTest(unittest.TestCase):
 
     def test_resume_reuses_run_id_and_skips_completed(self) -> None:
         out = io.StringIO()
+        log_dir = Path(tempfile.mkdtemp())
         with mock.patch("sarashina_eval.client.SarashinaClient") as client_cls, \
                 mock.patch.object(run_cli, "run_plan", return_value=[]) as run_plan_mock, \
                 redirect_stdout(out):
-            code = run_cli.main([str(SAMPLE), "--resume", "run-X"])
+            client_cls.return_value.run_id = "run-X"
+            argv = [str(SAMPLE), "--resume", "run-X", "--log-dir", str(log_dir), "--note", "再開の確認"]
+            code = run_cli.main(argv)
         self.assertEqual(code, 0)
+        runs = [json.loads(l) for l in (log_dir / "runs.jsonl").read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(len(runs), 1)
+        self.assertEqual({k: runs[0][k] for k in ("event", "run_id", "entry", "note", "resumed", "counts", "argv")},
+                         {"event": "send", "run_id": "run-X", "entry": "sarashina_eval.run", "note": "再開の確認",
+                          "resumed": True, "counts": {"sent": 0}, "argv": argv})
         self.assertEqual(client_cls.call_args.kwargs["run_id"], "run-X")
         skip = run_plan_mock.call_args.kwargs["should_skip"]
         skip("sarashina3-mini", "math-001")

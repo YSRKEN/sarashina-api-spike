@@ -212,7 +212,8 @@ def write_outputs(scores: list[CaseScore], run_id: str, scores_dir: Path, report
     Returns
     -------
     tuple of Path
-        ``(<scores_dir>/<run_id>-non-chat.jsonl, <reports_dir>/<日付>-non-chat-scores.csv)``。
+        ``(<scores_dir>/<run_id>-non-chat.jsonl, <reports_dir>/<today>-<run_id の先頭 8 文字>-non-chat-scores.csv)``。
+        ``today`` には実行の最初の送信の UTC 日付を渡す。
     """
     scores_dir.mkdir(parents=True, exist_ok=True)
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -220,7 +221,7 @@ def write_outputs(scores: list[CaseScore], run_id: str, scores_dir: Path, report
     with jsonl.open("w", encoding="utf-8") as f:
         for s in scores:
             f.write(json.dumps(asdict(s), ensure_ascii=False) + "\n")
-    csv_path = reports_dir / f"{today:%Y-%m-%d}-non-chat-scores.csv"
+    csv_path = reports_dir / f"{today:%Y-%m-%d}-{run_id[:8]}-non-chat-scores.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         w.writerow(CSV_HEADER)

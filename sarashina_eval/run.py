@@ -12,6 +12,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from sarashina_eval.run_log import append_run, run_log_files
 from sarashina_eval.questions import CATEGORIES, QuestionSetError, load_questions
 from sarashina_eval.runner import DEFAULT_MODELS, DEFAULT_N, format_dry_run, plan_requests, run_plan
 
@@ -32,6 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--log-dir", type=Path, default=None, help="記録の置き場（既定は logs/）")
     p.add_argument("--resume", metavar="RUN_ID", default=None,
                    help="この run_id の実行を再開し、HTTP 200 で済んだ (モデル, 設問) を送らない")
+    p.add_argument("--note", default=None, help="この実行の目的（logs/runs.jsonl に残す）")
     return p
 
 
@@ -69,6 +71,10 @@ def main(argv: list[str] | None = None) -> int:
     client = SarashinaClient(log_dir=args.log_dir, run_id=args.resume)
     records = run_plan(client, plan, should_skip=lambda model, qid: client.is_completed(model, qid))
     print(f"送信 {len(records)} 件、run_id={client.run_id}")
+    log_dir = args.log_dir if args.log_dir is not None else Path(__file__).resolve().parent.parent / "logs"
+    append_run(log_dir, event="send", run_id=client.run_id, entry="sarashina_eval.run", note=args.note,
+               resumed=args.resume is not None, counts={"sent": len(records)},
+               outputs=run_log_files(log_dir, client.run_id), argv=sys.argv[1:] if argv is None else argv)
     return 0
 
 

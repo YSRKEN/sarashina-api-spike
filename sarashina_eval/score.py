@@ -1,7 +1,8 @@
 """ログから答えを取り出して自動採点し、分野×モデルの得点を CSV に出す。
 
 ログ（``logs/*.jsonl``）は読むだけで書き換えない。答えごとの採点結果は
-``logs/scores/<run_id>.jsonl`` に、集計は ``reports/<日付>-scores.csv`` に出す。
+``logs/scores/<run_id>.jsonl`` に、集計は ``reports/<日付>-<run_id の先頭 8 文字>-scores.csv`` に出す。
+日付はその実行の最初の送信（``sent_at``）の UTC 日付。採点のたびに ``logs/runs.jsonl`` へ 1 行足す。
 
 使い方::
 
@@ -28,6 +29,7 @@ from typing import Any
 
 from sarashina_eval import code_runner
 from sarashina_eval.questions import Question, load_questions
+from sarashina_eval.run_log import append_run, run_date
 from sarashina_eval.run_log import iter_records
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -339,6 +341,9 @@ def write_outputs(
 ) -> tuple[Path, Path]:
     """採点結果の JSONL と得点の CSV を書く。
 
+    CSV の名前は ``<today>-<run_id の先頭 8 文字>-scores.csv``。``today`` には実行の最初の送信の
+    UTC 日付を渡す（同じ実行を採点し直すと同じ名前で上書きし、別の実行とは重ならない）。
+
     JSONL は答えの本文を含むので、公開しない置き場（既定 ``logs/scores/``）に置く。
     CSV には本文を入れない。
 
@@ -353,7 +358,7 @@ def write_outputs(
     with jsonl.open("w", encoding="utf-8") as f:
         for s in scores:
             f.write(json.dumps(asdict(s), ensure_ascii=False) + "\n")
-    csv_path = reports_dir / f"{today:%Y-%m-%d}-scores.csv"
+    csv_path = reports_dir / f"{today:%Y-%m-%d}-{run_id[:8]}-scores.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=header)
         w.writeheader()
@@ -369,6 +374,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--questions", type=Path, default=ROOT / "questions")
     p.add_argument("--scores-dir", type=Path, default=None, help="既定は <log-dir>/scores")
     p.add_argument("--reports-dir", type=Path, default=ROOT / "reports")
+    p.add_argument("--note", default=None, help="この採点の目的（logs/runs.jsonl に残す）")
     a = p.parse_args(argv)
     questions = {q.id: q for q in load_questions([a.questions])}
     scores, ungraded, unknown = score_run(a.log_dir, a.run_id, questions)
@@ -376,9 +382,16 @@ def main(argv: list[str] | None = None) -> int:
         print(f"run_id {a.run_id} の HTTP 200 の記録が無い", file=sys.stderr)
         return 1
     header, rows = summarize(scores, ungraded)
+    day = run_date(a.log_dir, a.run_id) or date.today()
     jsonl, csv_path = write_outputs(
-        scores, header, rows, a.run_id, a.scores_dir or a.log_dir / "scores", a.reports_dir, date.today()
+        scores, header, rows, a.run_id, a.scores_dir or a.log_dir / "scores", a.reports_dir, day
     )
+    counts = {"answers": len(scores), "ungraded": len(ungraded)}
+    for s in scores:
+        counts[s.status] = counts.get(s.status, 0) + 1
+    append_run(a.log_dir, event="score", run_id=a.run_id, entry="sarashina_eval.score", note=a.note,
+               resumed=False, counts=counts, outputs=[jsonl, csv_path],
+               argv=sys.argv[1:] if argv is None else argv)
     print(f"採点結果: {jsonl}\n得点: {csv_path}")
     skipped = sum(s.status == SKIPPED for s in scores)
     if skipped:

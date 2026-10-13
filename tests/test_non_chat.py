@@ -291,9 +291,11 @@ class CasesTest(unittest.TestCase):
     def test_dry_run_does_not_send(self) -> None:
         out = io.StringIO()
         with mock.patch.object(client_mod, "SarashinaClient") as cls, contextlib.redirect_stdout(out):
-            code = non_chat.main(["run", "--dry-run", "--inputs", str(FIXTURE_INPUTS)])
+            log_dir = Path(tempfile.mkdtemp())
+            code = non_chat.main(["run", "--dry-run", "--inputs", str(FIXTURE_INPUTS), "--log-dir", str(log_dir)])
         self.assertEqual(code, 0)
         cls.assert_not_called()
+        self.assertFalse((log_dir / "runs.jsonl").exists())
         self.assertIn("送る要求 13 件", out.getvalue())
         self.assertIn("sarashina3-embedding", out.getvalue())
 
@@ -316,6 +318,14 @@ class EndToEndTest(_ServerCase):
         code, out = self._main("run", "--resume", "run-e2e")
         self.assertIn("送信 0 件", out)
         self.assertEqual(len(_Handler.received), 13)
+        runs = [json.loads(l) for l in (self.log_dir / "runs.jsonl").read_text(encoding="utf-8").splitlines()]
+        self.assertEqual([(r["event"], r["counts"], r["resumed"]) for r in runs],
+                         [("send", {"sent": 13}, True), ("send", {"sent": 0}, True)])
+        self.assertEqual(runs[0]["entry"], "sarashina_eval.non_chat run")
+        self.assertIsNone(runs[0]["note"])
+        self.assertTrue(runs[0]["outputs"] and all(p.endswith(".jsonl") for p in runs[0]["outputs"]))
+        # 実行の一覧は API の記録として読まれない（再開の判定を崩さない）。
+        self.assertEqual(len(completed_attempts(self.log_dir, "run-e2e")), 13)
 
         reports = self.dir / "reports"
         code, out = self._main("score", "--run-id", "run-e2e", "--reports-dir", str(reports))
@@ -333,6 +343,12 @@ class EndToEndTest(_ServerCase):
         self.assertEqual(by_id["tr-tmp-01"]["content"], "TRANSLATED:明日は雨が降るでしょう。")
         csv_files = list(reports.glob("*-non-chat-scores.csv"))
         self.assertEqual(len(csv_files), 1)
+        runs = [json.loads(l) for l in (self.log_dir / "runs.jsonl").read_text(encoding="utf-8").splitlines()]
+        self.assertEqual([r["event"] for r in runs][-1], "score")
+        self.assertEqual(runs[-1]["entry"], "sarashina_eval.non_chat score")
+        self.assertEqual(runs[-1]["counts"]["cases"], 8)
+        self.assertIn(str(csv_files[0]), runs[-1]["outputs"])
+        self.assertTrue(csv_files[0].name.endswith("-run-e2e-non-chat-scores.csv"))
         text = csv_files[0].read_text(encoding="utf-8")
         self.assertNotIn("TRANSLATED", text)
         self.assertNotIn("明日は雨", text)
@@ -347,7 +363,7 @@ class EndToEndTest(_ServerCase):
     def test_write_outputs_paths(self) -> None:
         jsonl, csv_path = write_outputs([], "r", self.dir / "s", self.dir / "rep", date(2026, 10, 13))
         self.assertEqual(jsonl.name, "r-non-chat.jsonl")
-        self.assertEqual(csv_path.name, "2026-10-13-non-chat-scores.csv")
+        self.assertEqual(csv_path.name, "2026-10-13-r-non-chat-scores.csv")
 
 
 if __name__ == "__main__":

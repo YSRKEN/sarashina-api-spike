@@ -159,6 +159,12 @@ class ScoreRunTest(unittest.TestCase):
         self.assertEqual(self.log_file.read_bytes(), before)
         csv_files = list(reports.glob("*-scores.csv"))
         self.assertEqual(len(csv_files), 1)
+        runs = [json.loads(l) for l in (self.logs / "runs.jsonl").read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(len(runs), 1)
+        self.assertEqual((runs[0]["event"], runs[0]["run_id"], runs[0]["entry"], runs[0]["resumed"]),
+                         ("score", "r1", "sarashina_eval.score", False))
+        self.assertEqual(runs[0]["counts"]["answers"], 15)
+        self.assertEqual(runs[0]["outputs"], [str(self.logs / "scores" / "r1.jsonl"), str(csv_files[0])])
         text = csv_files[0].read_text(encoding="utf-8")
         self.assertNotIn("km", text)  # 出力本文を CSV に入れない
         table = list(csv.DictReader(io.StringIO(text)))

@@ -19,6 +19,7 @@ from pathlib import Path
 
 from sarashina_eval.non_chat_cases import KIND_MODELS, CaseSetError, format_dry_run, load_cases, plan_calls, send_call
 from sarashina_eval.non_chat_score import score_cases, summary_lines, write_outputs
+from sarashina_eval.run_log import append_run, run_date, run_log_files
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_INPUT_DIRS = (ROOT / "inputs", ROOT / "inputs_private")
@@ -35,6 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
                        help="入力の置き場（既定は inputs/ と inputs_private/）")
         s.add_argument("--kinds", nargs="+", choices=list(KIND_MODELS), default=None, help="種類で絞る")
         s.add_argument("--log-dir", type=Path, default=ROOT / "logs")
+        s.add_argument("--note", default=None, help="この実行・採点の目的（logs/runs.jsonl に残す）")
     r = sub.choices["run"]
     r.add_argument("--dry-run", action="store_true", help="要求数と所要時間の見積もりを出し、送らない")
     r.add_argument("--resume", metavar="RUN_ID", default=None,
@@ -55,6 +57,7 @@ def main(argv: list[str] | None = None) -> int:
         終了コード。入力の誤りは 2、採点する記録が無ければ 1。
     """
     a = build_parser().parse_args(argv)
+    raw_argv = sys.argv[1:] if argv is None else list(argv)
     try:
         cases = load_cases(a.inputs, a.kinds)
     except CaseSetError as e:
@@ -76,13 +79,21 @@ def main(argv: list[str] | None = None) -> int:
             send_call(client, call)
             sent += 1
         print(f"送信 {sent} 件、run_id={client.run_id}")
+        append_run(a.log_dir, event="send", run_id=client.run_id, entry="sarashina_eval.non_chat run", note=a.note,
+                   resumed=a.resume is not None, counts={"sent": sent},
+                   outputs=run_log_files(a.log_dir, client.run_id), argv=raw_argv)
         return 0
     scores = score_cases(a.log_dir, a.run_id, cases)
     if not scores:
         print("採点する入力が無い", file=sys.stderr)
         return 1
     jsonl, csv_path = write_outputs(scores, a.run_id, a.scores_dir or a.log_dir / "scores",
-                                    a.reports_dir, date.today())
+                                    a.reports_dir, run_date(a.log_dir, a.run_id) or date.today())
+    counts = {"cases": len(scores)}
+    for s in scores:
+        counts[s.status] = counts.get(s.status, 0) + 1
+    append_run(a.log_dir, event="score", run_id=a.run_id, entry="sarashina_eval.non_chat score", note=a.note,
+               resumed=False, counts=counts, outputs=[jsonl, csv_path], argv=raw_argv)
     print("\n".join(summary_lines(scores)))
     print(f"採点結果: {jsonl}\n得点: {csv_path}")
     return 0

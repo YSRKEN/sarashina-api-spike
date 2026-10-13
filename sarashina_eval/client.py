@@ -14,13 +14,36 @@ from typing import Any
 from sarashina_eval.clock import Clock, SystemClock
 from sarashina_eval.models import BASE_URL, MODEL_RPM, Endpoint
 from sarashina_eval.rate_limiter import RateLimiter
+from sarashina_eval.run_log import completed_attempts, recent_sends
 
 ROOT = Path(__file__).resolve().parent.parent
 TIMEOUT_SEC = 60
+#: 429 のあと送り直すまでの秒数（送り直しは 1 回だけ）。
+RETRY_AFTER_429_SEC = 61.0
+#: 送り直す 5xx。
+SERVER_ERROR_STATUSES = frozenset({500, 503})
+#: 5xx の送り直しの前に待つ秒数（並びの長さが送り直しの回数）。
+SERVER_ERROR_BACKOFF_SEC = (2.0, 4.0)
 
 
 class ApiKeyMissingError(RuntimeError):
     """API キーが空のときに送らずに止めるための例外。"""
+
+
+class RateLimitExceededError(RuntimeError):
+    """429 のあと送り直してもまた 429 だったときに、実行を止めるための例外。
+
+    Parameters
+    ----------
+    message : str
+        説明。
+    record : dict
+        2 回目の 429 の記録（JSONL には書き済み）。
+    """
+
+    def __init__(self, message: str, record: dict[str, Any]) -> None:
+        super().__init__(message)
+        self.record = record
 
 
 def load_api_key(env_path: Path | None = None) -> str:
@@ -99,6 +122,29 @@ class SarashinaClient:
         self._log_dir = log_dir if log_dir is not None else ROOT / "logs"
         self.run_id = run_id if run_id is not None else str(uuid.uuid4())
         self._limiter = RateLimiter(rpm_by_model or MODEL_RPM, self._clock)
+        # 起動し直しても上限を超えないよう、直近の送信を窓に数え直す。
+        for model, times in recent_sends(self._log_dir, self._clock.now()).items():
+            self._limiter.seed(model, times)
+        self._completed = completed_attempts(self._log_dir, self.run_id)
+
+    def is_completed(self, question_id: str | None, attempt: int = 1) -> bool:
+        """この run_id で ``(question_id, attempt)`` が HTTP 200 で済んでいるかを返す。
+
+        起動時に記録から読んだものと、この実行で 200 になったものの両方を見る。
+
+        Parameters
+        ----------
+        question_id : str or None
+            設問の識別子。
+        attempt : int, optional
+            同じ設問への何回目の送信か。
+
+        Returns
+        -------
+        bool
+            済んでいれば True。
+        """
+        return (question_id, attempt) in self._completed
 
     def chat(
         self,
@@ -141,17 +187,68 @@ class SarashinaClient:
         question_id: str | None,
         attempt: int,
     ) -> dict[str, Any]:
-        """窓を守って POST し、往復をすべて記録する（各エンドポイント共通）。"""
+        """送り直しの規則に従って POST し、送った回ごとに記録する（各エンドポイント共通）。
+
+        429 は 61 秒待って 1 回だけ送り直し、また 429 なら ``RateLimitExceededError``。
+        500・503 は 2 秒・4 秒待って 2 回まで送り直す。それ以外は送り直さない。
+        送り直しも窓の limiter を通す。最後の記録を返す。
+        """
+        retry_wait = 0.0
+        after_429 = False
+        server_retries = 0
+        while True:
+            record = self._send_once(
+                endpoint,
+                model,
+                body,
+                question_id=question_id,
+                attempt=attempt,
+                retry_wait=retry_wait,
+                is_retry_after_429=after_429,
+            )
+            status = record["response"]["status"]
+            if status == 200:
+                self._completed.add((question_id, attempt))
+                return record
+            if status == 429:
+                if after_429:
+                    raise RateLimitExceededError(
+                        f"429 が 2 回続いたので実行を止める（model={model}, question_id={question_id}）",
+                        record,
+                    )
+                after_429, retry_wait = True, RETRY_AFTER_429_SEC
+                continue
+            if status in SERVER_ERROR_STATUSES and server_retries < len(SERVER_ERROR_BACKOFF_SEC):
+                retry_wait = SERVER_ERROR_BACKOFF_SEC[server_retries]
+                server_retries += 1
+                after_429 = False
+                continue
+            return record
+
+    def _send_once(
+        self,
+        endpoint: Endpoint,
+        model: str,
+        body: dict[str, Any],
+        *,
+        question_id: str | None,
+        attempt: int,
+        retry_wait: float,
+        is_retry_after_429: bool,
+    ) -> dict[str, Any]:
+        """送り直しの待ちと窓の待ちを入れて 1 回 POST し、往復を記録する。"""
         url = self._base_url + endpoint.value
         headers = {"Authorization": f"Bearer {self._api_key}", "Content-Type": "application/json"}
-        waited = self._limiter.acquire(model)
+        if retry_wait > 0:
+            self._clock.sleep(retry_wait)
+        waited = retry_wait + self._limiter.acquire(model)
 
         record: dict[str, Any] = {
             "run_id": self.run_id,
             "question_id": question_id,
             "attempt": attempt,
             "wait_before_send_sec": round(waited, 3),
-            "is_retry_after_429": False,
+            "is_retry_after_429": is_retry_after_429,
             "request": {"method": "POST", "url": url, "headers": _redact_headers(headers), "body": body},
         }
         req = urllib.request.Request(

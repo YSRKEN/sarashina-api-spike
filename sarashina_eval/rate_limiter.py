@@ -27,6 +27,21 @@ class RateLimiter:
         self._clock = clock
         self._sent: dict[str, deque[float]] = {}
 
+    def seed(self, model: str, times: list[float]) -> None:
+        """過去の送信時刻を窓に数え入れる（起動し直したときの数え直し用）。
+
+        Parameters
+        ----------
+        model : str
+            モデル名。
+        times : list of float
+            送信時刻（UNIX 秒）。順不同でよい。
+        """
+        sent = self._sent.setdefault(model, deque())
+        merged = sorted([*sent, *times])
+        sent.clear()
+        sent.extend(merged)
+
     def acquire(self, model: str) -> float:
         """``model`` に 1 回送ってよくなるまで待ち、送信時刻を記録する。
 

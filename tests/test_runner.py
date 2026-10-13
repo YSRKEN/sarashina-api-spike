@@ -18,7 +18,7 @@ from sarashina_eval.questions import QuestionSetError, load_questions
 from sarashina_eval.runner import estimate_seconds, format_dry_run, plan_requests, run_plan
 
 ROOT = Path(__file__).resolve().parent.parent
-SAMPLE = ROOT / "questions" / "math.jsonl"
+SAMPLE = ROOT / "tests" / "fixtures" / "sample_math.jsonl"
 FAKE_KEY = "test-key-not-real"
 START = 1_800_000_000.0  # 2027-01-15 08:00:00 UTC
 

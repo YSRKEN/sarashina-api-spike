@@ -9,8 +9,9 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
-from sarashina_eval import score
+from sarashina_eval import code_runner, score
 from sarashina_eval.questions import Grading, Question
 
 
@@ -94,7 +95,8 @@ class ScoreRunTest(unittest.TestCase):
             "math-001": q("math-001", "numeric", "37"),
             "math-002": q("math-002", "numeric", "108"),
             "math-003": q("math-003", "numeric", "10"),
-            "code-001": q("code-001", "code_tests", None, category="code"),
+            "code-001": q("code-001", "code_tests", None, category="code", function="f",
+                          tests=[{"input": [], "output": 1}]),
         }
         lines = [
             rec("r1", "m-a", "math-001", ["x", "y", "z"]),  # 古い記録（後の 200 で置き換わる）
@@ -116,8 +118,11 @@ class ScoreRunTest(unittest.TestCase):
         self.assertEqual(len(got), 5)
 
     def test_each_of_n_answers_graded_and_bucketed(self) -> None:
-        scores, ungraded, unknown = score.score_run(self.logs, "r1", self.questions)
-        self.assertEqual(len(scores), 12)
+        with mock.patch.object(code_runner, "docker_available", return_value=False):
+            scores, ungraded, unknown = score.score_run(self.logs, "r1", self.questions)
+        self.assertEqual(len(scores), 15)
+        skipped = [s for s in scores if s.question_id == "code-001"]
+        self.assertEqual({(s.status, s.note) for s in skipped}, {(score.SKIPPED, "docker_unavailable")})
         self.assertEqual(ungraded, [("m-a", "code", "code-001")])
         self.assertEqual(unknown, [])
         statuses = [s.status for s in scores if s.question_id == "math-003" and s.model == "m-a"]
@@ -145,11 +150,12 @@ class ScoreRunTest(unittest.TestCase):
         (qdir / "all.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows), encoding="utf-8")
         reports = self.tmp / "reports"
         out = io.StringIO()
-        with redirect_stdout(out):
+        with redirect_stdout(out), mock.patch.object(code_runner, "docker_available", return_value=False):
             code = score.main(["--run-id", "r1", "--log-dir", str(self.logs), "--questions", str(qdir),
                                "--reports-dir", str(reports)])
         self.assertEqual(code, 0)
         self.assertIn("未採点", out.getvalue())
+        self.assertIn("Docker が使えないため code_tests を飛ばした: 3 答え", out.getvalue())
         self.assertEqual(self.log_file.read_bytes(), before)
         csv_files = list(reports.glob("*-scores.csv"))
         self.assertEqual(len(csv_files), 1)
@@ -158,11 +164,36 @@ class ScoreRunTest(unittest.TestCase):
         table = list(csv.DictReader(io.StringIO(text)))
         self.assertEqual([r["category"] for r in table], ["code", "math"])
         jl = [json.loads(l) for l in (self.logs / "scores" / "r1.jsonl").read_text(encoding="utf-8").splitlines()]
-        self.assertEqual(len(jl), 12)
+        self.assertEqual(len(jl), 15)
         self.assertEqual(set(jl[0]), {"run_id", "model", "question_id", "category", "method",
-                                      "choice_index", "extracted", "status", "content"})
+                                      "choice_index", "extracted", "status", "content",
+                                      "tests_passed", "tests_total", "note"})
+        self.assertEqual(sum(r["status"] == "skipped" for r in jl), 3)
         # 採点結果は logs/ 直下ではないので、ログの読み取りに混ざらない
         self.assertEqual(len(score.latest_ok_records(self.logs, "r1")), 5)
+
+
+class CodeTestsScoringTest(unittest.TestCase):
+    """code_tests を採点し、通った件数を採点結果に残すこと（Docker は偽物に差し替える）。"""
+
+    def test_graded_with_counts(self) -> None:
+        tmp = Path(tempfile.mkdtemp())
+        contents = ["```python\ndef f():\n    return 1\n```", "```python\ndef f():\n    return 2\n```", "コードなし"]
+        (tmp / "l.jsonl").write_text(json.dumps(rec("r1", "m", "code-001", contents)) + "\n", encoding="utf-8")
+        qs = {"code-001": q("code-001", "code_tests", None, category="code", function="f",
+                            tests=[{"input": [], "output": 1}, {"input": [], "output": 1}])}
+
+        def fake(code: str, params: dict) -> code_runner.CodeResult:
+            return code_runner.CodeResult(2 if "return 1" in code else 0, 2)
+
+        with mock.patch.object(code_runner, "docker_available", return_value=True), \
+                mock.patch.object(code_runner, "run_tests", side_effect=fake):
+            scores, ungraded, _ = score.score_run(tmp, "r1", qs)
+        self.assertEqual(ungraded, [])
+        self.assertEqual([(s.status, s.extracted, s.tests_passed, s.tests_total) for s in scores], [
+            (score.CORRECT, "2/2", 2, 2), (score.WRONG, "0/2", 0, 2), (score.EXTRACT_FAILED, None, None, None)])
+        _, rows = score.summarize(scores, ungraded)
+        self.assertEqual(rows[0]["m:accuracy"], "0.333")
 
 
 if __name__ == "__main__":

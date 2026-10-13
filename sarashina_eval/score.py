@@ -7,7 +7,9 @@
 
     python3 -m sarashina_eval.score --run-id <id>
 
-採点できる方法は exact・numeric・regex。code_tests と human はまだ採点しない
+採点できる方法は exact・numeric・regex・code_tests。code_tests は答えのコードブロックを Docker の
+``python:3`` で実行し、全テストが通れば正解とする（通った件数も採点結果に残す）。Docker が使えないときは
+code_tests を飛ばし、状態 ``skipped`` の行を採点結果に書いて「未採点」として数える。human は採点しない
 （「未採点」として数え、正解率の分母に入れない）。
 """
 
@@ -24,16 +26,20 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from sarashina_eval import code_runner
 from sarashina_eval.questions import Question, load_questions
 from sarashina_eval.run_log import iter_records
 
 ROOT = Path(__file__).resolve().parent.parent
 
 #: 自動で採点する方法。
-AUTO_METHODS: frozenset[str] = frozenset({"exact", "numeric", "regex"})
+AUTO_METHODS: frozenset[str] = frozenset({"exact", "numeric", "regex", "code_tests"})
 
 #: 答え 1 つの採点の状態。
 CORRECT, WRONG, EXTRACT_FAILED = "correct", "wrong", "extract_failed"
+
+#: 採点を飛ばした答えの状態（Docker が使えない code_tests）。正解率の分母に入れない。
+SKIPPED = "skipped"
 
 _BOXED = re.compile(r"\\boxed\{([^{}]*)\}")
 _NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
@@ -52,9 +58,13 @@ class AnswerScore:
     extracted : str or None
         取り出した値。取り出せなければ None。
     status : str
-        ``correct``・``wrong``・``extract_failed`` のいずれか。
+        ``correct``・``wrong``・``extract_failed``・``skipped`` のいずれか。
     content : str or None
         答えの本文。公開しない置き場にだけ書く。
+    tests_passed, tests_total : int or None
+        code_tests で通ったテストの件数と全件数。それ以外の方法と、実行しなかったときは None。
+    note : str or None
+        補足（code_tests の実行の失敗の理由、飛ばした理由）。
     """
 
     run_id: str
@@ -66,6 +76,9 @@ class AnswerScore:
     extracted: str | None
     status: str
     content: str | None
+    tests_passed: int | None = None
+    tests_total: int | None = None
+    note: str | None = None
 
 
 def normalize_text(text: str) -> str:
@@ -143,6 +156,9 @@ def grade_answer(question: Question, content: str | None) -> tuple[str | None, s
     if method == "exact":
         got = content.strip()
         return got, CORRECT if got == (question.expected or "").strip() else WRONG
+    if method == "code_tests":
+        extracted, status, _ = grade_code_answer(question, content)
+        return extracted, status
     if method == "regex":
         m = re.search(params["pattern"], content)
         return (m.group(), CORRECT) if m else (None, WRONG)
@@ -152,6 +168,30 @@ def grade_answer(question: Question, content: str | None) -> tuple[str | None, s
     tol = float(params.get("tolerance", 0))
     ok = abs(value - float(question.expected or "nan")) <= tol
     return f"{value:g}", CORRECT if ok else WRONG
+
+
+def grade_code_answer(
+    question: Question, content: str | None
+) -> tuple[str | None, str, code_runner.CodeResult | None]:
+    """code_tests の答え 1 つを Docker で実行して採点する。
+
+    Parameters
+    ----------
+    question : Question
+        ``grading.method`` が ``code_tests`` の問題。
+    content : str or None
+
+    Returns
+    -------
+    tuple
+        ``(通った件数 "k/n", 状態, 実行結果)``。コードブロックが無ければ
+        ``(None, extract_failed, None)``。
+    """
+    code = code_runner.extract_code(content)
+    if code is None:
+        return None, EXTRACT_FAILED, None
+    res = code_runner.run_tests(code, question.grading.params)
+    return f"{res.passed}/{res.total}", CORRECT if res.all_passed else WRONG, res
 
 
 def latest_ok_records(log_dir: Path, run_id: str) -> dict[tuple[str, str], dict[str, Any]]:
@@ -204,6 +244,7 @@ def score_run(
     scores: list[AnswerScore] = []
     ungraded: list[tuple[str, str, str]] = []
     unknown: list[str] = []
+    docker_ok: bool | None = None
     for (model, qid), rec in sorted(latest_ok_records(log_dir, run_id).items()):
         q = questions.get(qid)
         if q is None:
@@ -211,6 +252,22 @@ def score_run(
             continue
         if q.grading.method not in AUTO_METHODS:
             ungraded.append((model, q.category, qid))
+            continue
+        if q.grading.method == "code_tests":
+            if docker_ok is None:
+                docker_ok = code_runner.docker_available()
+            for i, content in enumerate(answer_contents(rec)):
+                if not docker_ok:
+                    scores.append(AnswerScore(run_id, model, qid, q.category, q.grading.method, i, None, SKIPPED,
+                                              content, note="docker_unavailable"))
+                    continue
+                extracted, status, res = grade_code_answer(q, content)
+                scores.append(AnswerScore(
+                    run_id, model, qid, q.category, q.grading.method, i, extracted, status, content,
+                    res.passed if res else None, res.total if res else None, res.error if res else None,
+                ))
+            if not docker_ok:
+                ungraded.append((model, q.category, qid))
             continue
         for i, content in enumerate(answer_contents(rec)):
             extracted, status = grade_answer(q, content)
@@ -239,9 +296,11 @@ def summarize(
     """
     per_q: dict[tuple[str, str, str], list[str]] = {}
     for s in scores:
+        if s.status == SKIPPED:
+            continue
         per_q.setdefault((s.category, s.model, s.question_id), []).append(s.status)
-    models = sorted({s.model for s in scores} | {u[0] for u in ungraded})
-    cats = sorted({s.category for s in scores} | {u[1] for u in ungraded})
+    models = sorted({s.model for s in scores if s.status != SKIPPED} | {u[0] for u in ungraded})
+    cats = sorted({s.category for s in scores if s.status != SKIPPED} | {u[1] for u in ungraded})
     stats: dict[tuple[str, str], dict[str, int]] = {}
 
     def cell(c: str, m: str) -> dict[str, int]:
@@ -321,8 +380,11 @@ def main(argv: list[str] | None = None) -> int:
         scores, header, rows, a.run_id, a.scores_dir or a.log_dir / "scores", a.reports_dir, date.today()
     )
     print(f"採点結果: {jsonl}\n得点: {csv_path}")
+    skipped = sum(s.status == SKIPPED for s in scores)
+    if skipped:
+        print(f"Docker が使えないため code_tests を飛ばした: {skipped} 答え（採点結果に status=skipped で記録）")
     if ungraded:
-        print(f"未採点（code_tests・human。正解率の分母に入れない）: {len(ungraded)} 件")
+        print(f"未採点（Docker の無い code_tests・human。正解率の分母に入れない）: {len(ungraded)} 件")
     failed = sum(s.status == EXTRACT_FAILED for s in scores)
     if failed:
         print(f"取り出し失敗（不正解として数えた）: {failed} 件")

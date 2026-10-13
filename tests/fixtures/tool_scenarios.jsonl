@@ -1,0 +1,2 @@
+{"id": "w", "prompt": "2026-10-14 のほしぞら市の天気は？", "tools": ["get_weather"], "expected_calls": [{"name": "get_weather", "args": {"city": "ほしぞら市", "date": "2026-10-14"}}], "expected_facts": ["晴れ", "22"], "aim": "テスト用"}
+{"id": "none", "prompt": "ありがとうを英語で", "tools": ["get_weather"], "expected_calls": [], "expected_facts": ["thank"], "aim": "テスト用"}

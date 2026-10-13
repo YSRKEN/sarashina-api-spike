@@ -127,13 +127,15 @@ class SarashinaClient:
             self._limiter.seed(model, times)
         self._completed = completed_attempts(self._log_dir, self.run_id)
 
-    def is_completed(self, question_id: str | None, attempt: int = 1) -> bool:
-        """この run_id で ``(question_id, attempt)`` が HTTP 200 で済んでいるかを返す。
+    def is_completed(self, model: str, question_id: str | None, attempt: int = 1) -> bool:
+        """この run_id で ``(model, question_id, attempt)`` が HTTP 200 で済んでいるかを返す。
 
         起動時に記録から読んだものと、この実行で 200 になったものの両方を見る。
 
         Parameters
         ----------
+        model : str
+            モデル名。同じ設問でもモデルが違えば別に数える。
         question_id : str or None
             設問の識別子。
         attempt : int, optional
@@ -144,7 +146,7 @@ class SarashinaClient:
         bool
             済んでいれば True。
         """
-        return (question_id, attempt) in self._completed
+        return (model, question_id, attempt) in self._completed
 
     def chat(
         self,
@@ -208,7 +210,7 @@ class SarashinaClient:
             )
             status = record["response"]["status"]
             if status == 200:
-                self._completed.add((question_id, attempt))
+                self._completed.add((model, question_id, attempt))
                 return record
             if status == 429:
                 if after_429:

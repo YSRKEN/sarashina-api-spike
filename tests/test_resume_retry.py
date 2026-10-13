@@ -132,20 +132,27 @@ class ResumeCompletedTest(_Base):
         self.chat(first, question_id="q1")
         self.chat(first, question_id="q2")
         resumed = self.client("run-A")
-        self.assertTrue(resumed.is_completed("q1", 1))
-        self.assertFalse(resumed.is_completed("q1", 2))
-        self.assertFalse(resumed.is_completed("q2", 1))  # 400 は済みではない
-        self.assertFalse(resumed.is_completed("q3", 1))
+        self.assertTrue(resumed.is_completed(MINI, "q1", 1))
+        self.assertFalse(resumed.is_completed(MINI, "q1", 2))
+        self.assertFalse(resumed.is_completed(MINI, "q2", 1))  # 400 は済みではない
+        self.assertFalse(resumed.is_completed(MINI, "q3", 1))
 
     def test_other_run_id_is_not_completed(self) -> None:
         self.chat(self.client("run-A"), question_id="q1")
-        self.assertFalse(self.client("run-B").is_completed("q1", 1))
+        self.assertFalse(self.client("run-B").is_completed(MINI, "q1", 1))
+
+    def test_completed_is_per_model(self) -> None:
+        # 同じ設問を mini と nano の両方に送るので、済みかはモデルごとに分ける。
+        self.chat(self.client("run-A"), question_id="q1")
+        resumed = self.client("run-A")
+        self.assertTrue(resumed.is_completed(MINI, "q1", 1))
+        self.assertFalse(resumed.is_completed("sarashina3-nano", "q1", 1))
 
     def test_completed_within_same_run(self) -> None:
         c = self.client()
-        self.assertFalse(c.is_completed("q1"))
+        self.assertFalse(c.is_completed(MINI, "q1"))
         self.chat(c, question_id="q1")
-        self.assertTrue(c.is_completed("q1"))
+        self.assertTrue(c.is_completed(MINI, "q1"))
 
 
 class Retry429Test(_Base):

@@ -225,6 +225,11 @@ class CliTest(unittest.TestCase):
                          {"event": "send", "run_id": "run-X", "entry": "sarashina_eval.run", "note": "再開の確認",
                           "resumed": True, "counts": {"sent": 0}, "argv": argv})
         self.assertEqual(client_cls.call_args.kwargs["run_id"], "run-X")
+        # 送った問題集の写しが run_id ごとに残る。
+        manifest = json.loads((log_dir / "runs" / "run-X" / "manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual([f["kind"] for f in manifest["files"]], ["questions"])
+        snap = (log_dir / "runs" / "run-X" / manifest["files"][0]["path"]).read_text(encoding="utf-8")
+        self.assertEqual(snap, SAMPLE.read_text(encoding="utf-8"))
         skip = run_plan_mock.call_args.kwargs["should_skip"]
         skip("sarashina3-mini", "math-001")
         client_cls.return_value.is_completed.assert_called_once_with("sarashina3-mini", "math-001")

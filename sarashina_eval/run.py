@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 from sarashina_eval.run_log import append_run, run_log_files
+from sarashina_eval.run_snapshot import save_snapshot
 from sarashina_eval.questions import CATEGORIES, QuestionSetError, load_questions
 from sarashina_eval.runner import DEFAULT_MODELS, DEFAULT_N, format_dry_run, plan_requests, run_plan
 
@@ -69,12 +70,14 @@ def main(argv: list[str] | None = None) -> int:
     from sarashina_eval.client import SarashinaClient
 
     client = SarashinaClient(log_dir=args.log_dir, run_id=args.resume)
+    log_dir = args.log_dir if args.log_dir is not None else Path(__file__).resolve().parent.parent / "logs"
+    # 送る前に、送る対象の問題の写しを残す（あとで同じ中身で採点し直すため）。
+    snap = save_snapshot(log_dir, client.run_id, questions=(args.paths, {q.id for q in questions}))
     records = run_plan(client, plan, should_skip=lambda model, qid: client.is_completed(model, qid))
     print(f"送信 {len(records)} 件、run_id={client.run_id}")
-    log_dir = args.log_dir if args.log_dir is not None else Path(__file__).resolve().parent.parent / "logs"
     append_run(log_dir, event="send", run_id=client.run_id, entry="sarashina_eval.run", note=args.note,
                resumed=args.resume is not None, counts={"sent": len(records)},
-               outputs=run_log_files(log_dir, client.run_id), argv=sys.argv[1:] if argv is None else argv)
+               outputs=[*run_log_files(log_dir, client.run_id), snap], argv=sys.argv[1:] if argv is None else argv)
     return 0
 
 

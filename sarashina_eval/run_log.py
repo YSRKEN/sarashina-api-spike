@@ -184,6 +184,7 @@ def append_run(
     outputs: list[Path],
     argv: list[str],
     now: datetime | None = None,
+    reference: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """実行の一覧 ``<log_dir>/runs.jsonl`` に 1 行足す。
 
@@ -208,6 +209,9 @@ def append_run(
         入口に渡された引数。
     now : datetime, optional
         記録する時刻。省略時は今（UTC）。
+    reference : dict, optional
+        採点で照合した問題集・入力（``{"source": "snapshot" か "current", "paths": [...]}``）。
+        渡したときだけ行に ``reference`` として入れる。
 
     Returns
     -------
@@ -233,6 +237,8 @@ def append_run(
         "outputs": [str(p) for p in outputs],
         "argv": list(argv),
     }
+    if reference is not None:
+        row["reference"] = reference
     line = json.dumps(row, ensure_ascii=False) + "\n"  # 書けない値なら、ファイルを開く前に落とす
     log_dir.mkdir(parents=True, exist_ok=True)
     with (log_dir / RUNS_FILE).open("a", encoding="utf-8") as f:

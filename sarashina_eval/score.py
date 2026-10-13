@@ -30,6 +30,7 @@ from typing import Any
 from sarashina_eval import code_runner
 from sarashina_eval.questions import Question, load_questions
 from sarashina_eval.run_log import append_run, run_date
+from sarashina_eval.run_snapshot import snapshot_paths
 from sarashina_eval.run_log import iter_records
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -371,12 +372,24 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="python3 -m sarashina_eval.score", description="ログを自動採点する")
     p.add_argument("--run-id", required=True)
     p.add_argument("--log-dir", type=Path, default=ROOT / "logs")
-    p.add_argument("--questions", type=Path, default=ROOT / "questions")
+    p.add_argument("--questions", type=Path, default=None,
+                   help="照合する問題集（既定は <log-dir>/runs/<run_id>/ の写し、無ければ questions/）")
     p.add_argument("--scores-dir", type=Path, default=None, help="既定は <log-dir>/scores")
     p.add_argument("--reports-dir", type=Path, default=ROOT / "reports")
     p.add_argument("--note", default=None, help="この採点の目的（logs/runs.jsonl に残す）")
     a = p.parse_args(argv)
-    questions = {q.id: q for q in load_questions([a.questions])}
+    if a.questions is not None:
+        qpaths = [a.questions]
+        reference = {"source": "current", "paths": [str(a.questions)]}
+    else:
+        snap = snapshot_paths(a.log_dir, a.run_id, "questions")
+        if snap is not None:
+            qpaths, reference = snap, {"source": "snapshot", "paths": [str(p) for p in snap]}
+        else:
+            qpaths = [ROOT / "questions"]
+            reference = {"source": "current", "paths": [str(qpaths[0])]}
+            print(f"run_id {a.run_id} の写しが無いので、今の questions/ と照合する", file=sys.stderr)
+    questions = {q.id: q for q in load_questions(qpaths)}
     scores, ungraded, unknown = score_run(a.log_dir, a.run_id, questions)
     if not scores and not ungraded:
         print(f"run_id {a.run_id} の HTTP 200 の記録が無い", file=sys.stderr)
@@ -391,7 +404,7 @@ def main(argv: list[str] | None = None) -> int:
         counts[s.status] = counts.get(s.status, 0) + 1
     append_run(a.log_dir, event="score", run_id=a.run_id, entry="sarashina_eval.score", note=a.note,
                resumed=False, counts=counts, outputs=[jsonl, csv_path],
-               argv=sys.argv[1:] if argv is None else argv)
+               argv=sys.argv[1:] if argv is None else argv, reference=reference)
     print(f"採点結果: {jsonl}\n得点: {csv_path}")
     skipped = sum(s.status == SKIPPED for s in scores)
     if skipped:

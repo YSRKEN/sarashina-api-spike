@@ -323,7 +323,9 @@ class EndToEndTest(_ServerCase):
                          [("send", {"sent": 13}, True), ("send", {"sent": 0}, True)])
         self.assertEqual(runs[0]["entry"], "sarashina_eval.non_chat run")
         self.assertIsNone(runs[0]["note"])
-        self.assertTrue(runs[0]["outputs"] and all(p.endswith(".jsonl") for p in runs[0]["outputs"]))
+        # 出力は API の記録の日付ファイルと、末尾に入力の写しの置き場。
+        self.assertTrue(all(p.endswith(".jsonl") for p in runs[0]["outputs"][:-1]))
+        self.assertEqual(runs[0]["outputs"][-1], str(self.log_dir / "runs" / "run-e2e"))
         # 実行の一覧は API の記録として読まれない（再開の判定を崩さない）。
         self.assertEqual(len(completed_attempts(self.log_dir, "run-e2e")), 13)
 

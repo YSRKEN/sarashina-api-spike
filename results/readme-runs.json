@@ -3,5 +3,11 @@
     {"run_id": "31fb3e0c", "heading": "2026-10-13"},
     {"run_id": "haiku55-low-bcb885f0", "heading": "参考"},
     {"run_id": "gpt6luna-low-8b0ad329", "heading": "参考"}
-  ]
+  ],
+  "names": {
+    "sarashina3-mini": "mini",
+    "sarashina3-nano": "nano",
+    "claude-haiku-5-5-low": "Claude Haiku 5.5 low",
+    "gpt-6-luna-low": "GPT-6 Luna low"
+  }
 }

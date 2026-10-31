@@ -3,9 +3,11 @@
 載せる実行は ``results/readme-runs.json`` だけで決める::
 
     {"runs": [{"run_id": "31fb3e0c", "heading": "2026-10-13"},
-              {"run_id": "haiku55-low-bcb885f0", "heading": "参考"}]}
+              {"run_id": "haiku55-low-bcb885f0", "heading": "参考"}],
+     "names": {"claude-haiku-5-5-low": "Claude Haiku 5.5（low）"}}
 
 実行ごとに ``results/*-<run_id>-chat-scores.csv`` を読み、モデルごとに 1 列にする。
+``names``（省いてよい）はモデルの ID から列の表示名への対応で、無いモデルは ID のまま出す。
 見出しに「参考」を含む実行（ほかの会社のモデル）は右端へ寄せる。新しい版の実行を一覧に足すと列が増える。
 
 使い方::
@@ -34,9 +36,10 @@ CATEGORIES: tuple[tuple[str, str], ...] = (
 DRAFT = "下書きの判定"
 
 
-def load_runs(path: Path) -> list[dict[str, str]]:
-    """``readme-runs.json`` の ``runs``（``run_id`` と ``heading`` の並び）を読む。"""
-    return json.loads(path.read_text(encoding="utf-8"))["runs"]
+def load_runs(path: Path) -> tuple[list[dict[str, str]], dict[str, str]]:
+    """``readme-runs.json`` の ``runs``（``run_id`` と ``heading`` の並び）と ``names`` を読む。"""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return data["runs"], data.get("names", {})
 
 
 def _read_run(results_dir: Path, run_id: str) -> list[dict[str, str]]:
@@ -55,12 +58,14 @@ def _read_run(results_dir: Path, run_id: str) -> list[dict[str, str]]:
         return [r for r in csv.DictReader(f) if r["run_id"] == run_id]
 
 
-def build_table(results_dir: Path, runs: list[dict[str, str]]) -> str:
+def build_table(results_dir: Path, runs: list[dict[str, str]], names: dict[str, str] | None = None) -> str:
     """分野ごとの得点表（Markdown）を作る。
 
     列は一覧の順（「参考」の実行は右端へ寄せ、その中は一覧の順）に、モデルごとに 1 列。
+    列の見出しは ``<表示名>（<見出し>）``。表示名は ``names`` に無ければモデルの ID。
     採点した答えが 0 の分野は ``下書きの判定``。その列に行が無い分野は ``-``。
     """
+    names = names or {}
     ordered = sorted(runs, key=lambda r: "参考" in r["heading"])  # 安定な並べ替え
     columns: list[tuple[str, dict[str, dict[str, str]]]] = []
     for run in ordered:
@@ -68,7 +73,7 @@ def build_table(results_dir: Path, runs: list[dict[str, str]]) -> str:
         for row in _read_run(results_dir, run["run_id"]):
             by_model.setdefault(row["model"], {})[row["category"]] = row
         for model, cats in by_model.items():
-            columns.append((f"{model}（{run['heading']}）", cats))
+            columns.append((f"{names.get(model, model)}（{run['heading']}）", cats))
     lines = ["| 分野 | " + " | ".join(h for h, _ in columns) + " |",
              "|---" * (len(columns) + 1) + "|"]
     present = {c for _, cats in columns for c in cats}
@@ -105,8 +110,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--results-dir", type=Path, default=ROOT / "results")
     p.add_argument("--runs", type=Path, default=None, help="既定は <results-dir>/readme-runs.json")
     a = p.parse_args(argv)
-    runs = load_runs(a.runs or a.results_dir / "readme-runs.json")
-    table = build_table(a.results_dir, runs)
+    runs, names = load_runs(a.runs or a.results_dir / "readme-runs.json")
+    table = build_table(a.results_dir, runs, names)
     a.readme.write_text(replace_block(a.readme.read_text(encoding="utf-8"), table), encoding="utf-8")
     print(f"書き換えた: {a.readme}\n{table}")
     return 0

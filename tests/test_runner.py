@@ -204,7 +204,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(code, 0)
         client_cls.assert_not_called()
         text = out.getvalue()
-        self.assertIn("送る要求 6 件", text)
+        self.assertIn("送るリクエスト 6 件", text)
         self.assertIn("math-003", text)
         self.assertIn("sarashina3-mini    3 件 / 6 RPM -> 約 0 秒", text)
         self.assertEqual(text, format_dry_run(plan_requests(load_questions([SAMPLE]))) + "\n")

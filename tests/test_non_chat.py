@@ -1,4 +1,4 @@
-"""Chat 以外の 4 モデル: 偽のサーバーで要求の形・応答の解釈・採点・入口を確かめる。"""
+"""Chat 以外の 4 モデル: 偽のサーバーでリクエストの形・応答の解釈・採点・入口を確かめる。"""
 
 from __future__ import annotations
 
@@ -296,7 +296,7 @@ class CasesTest(unittest.TestCase):
         self.assertEqual(code, 0)
         cls.assert_not_called()
         self.assertFalse((log_dir / "runs.jsonl").exists())
-        self.assertIn("送る要求 13 件", out.getvalue())
+        self.assertIn("送るリクエスト 13 件", out.getvalue())
         self.assertIn("sarashina3-embedding", out.getvalue())
 
 
@@ -314,7 +314,7 @@ class EndToEndTest(_ServerCase):
         code, out = self._main("run", "--resume", "run-e2e")
         self.assertEqual(code, 0)
         self.assertIn("送信 13 件", out)
-        # 再開すると済んだ要求は送らない。
+        # 再開すると済んだリクエストは送らない。
         code, out = self._main("run", "--resume", "run-e2e")
         self.assertIn("送信 0 件", out)
         self.assertEqual(len(_Handler.received), 13)

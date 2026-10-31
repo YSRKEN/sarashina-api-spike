@@ -66,6 +66,12 @@ class ReadmeTableTest(unittest.TestCase):
         self.assertEqual(lines[4], "| 日本語 | 下書きの判定 | 下書きの判定 | 下書きの判定 |")
         self.assertEqual(len(lines), 5)
 
+    def test_display_names_replace_model_ids(self) -> None:
+        names = {"sarashina3-mini": "mini", "other-model": "Other（low）"}
+        lines = readme_table.build_table(self.results, self.runs, names).splitlines()
+        # 表示名の無いモデルは ID のまま。
+        self.assertEqual(lines[0], "| 分野 | mini（2026-10-13） | sarashina3-nano（2026-10-13） | Other（low）（参考） |")
+
     def test_missing_csv_is_an_error(self) -> None:
         with self.assertRaises(FileNotFoundError):
             readme_table.build_table(self.results, [{"run_id": "nothing", "heading": "x"}])
@@ -91,6 +97,16 @@ class ReadmeTableTest(unittest.TestCase):
         text = readme.read_text(encoding="utf-8")
         self.assertIn("| 数学 | 0.667 | 1.000 | 0.900 |", text)
         self.assertTrue(text.startswith("# 題\n<!-- results:start -->\n| 分野 |"))
+
+    def test_main_reads_display_names_from_runs_file(self) -> None:
+        readme = self.dir / "README.md"
+        readme.write_text("<!-- results:start -->\n<!-- results:end -->\n", encoding="utf-8")
+        (self.results / "readme-runs.json").write_text(
+            json.dumps({"runs": self.runs, "names": {"sarashina3-nano": "nano"}}, ensure_ascii=False),
+            encoding="utf-8")
+        with redirect_stdout(io.StringIO()):
+            readme_table.main(["--readme", str(readme), "--results-dir", str(self.results)])
+        self.assertIn("| nano（2026-10-13） |", readme.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

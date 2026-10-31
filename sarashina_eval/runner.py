@@ -1,4 +1,4 @@
-"""問題集を複数のモデルへ流す。送る要求の計画と所要時間の見積もりもここで作る。"""
+"""問題集を複数のモデルへ流す。送るリクエストの計画と所要時間の見積もりもここで作る。"""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ class ChatSender(Protocol):
 
 @dataclass(frozen=True)
 class PlannedRequest:
-    """送る予定の 1 要求。
+    """送る予定の 1 リクエスト。
 
     Attributes
     ----------
@@ -60,7 +60,7 @@ class PlannedRequest:
 def plan_requests(
     questions: list[Question], models: tuple[str, ...] = DEFAULT_MODELS, n: int = DEFAULT_N
 ) -> list[PlannedRequest]:
-    """送る順に要求を並べる。1 問ごとに各モデルへ 1 回ずつ送る。
+    """送る順にリクエストを並べる。1 問ごとに各モデルへ 1 回ずつ送る。
 
     Parameters
     ----------
@@ -111,7 +111,7 @@ def estimate_seconds(
 
 
 def format_dry_run(plan: list[PlannedRequest], rpm_by_model: dict[str, int] | None = None) -> str:
-    """``--dry-run`` で出す、要求の一覧と所要時間の見積もりの文を作る。
+    """``--dry-run`` で出す、リクエストの一覧と所要時間の見積もりの文を作る。
 
     Parameters
     ----------
@@ -124,7 +124,7 @@ def format_dry_run(plan: list[PlannedRequest], rpm_by_model: dict[str, int] | No
     str
     """
     rpm = rpm_by_model or MODEL_RPM
-    lines = [f"送る要求 {len(plan)} 件（実際には送らない）:"]
+    lines = [f"送るリクエスト {len(plan)} 件（実際には送らない）:"]
     for i, r in enumerate(plan, start=1):
         params = " ".join(f"{k}={v}" for k, v in r.params.items())
         lines.append(f"  {i:>3}. {r.model:<18} {r.question.id:<14} [{r.question.category}] {params}")
@@ -153,7 +153,7 @@ def run_plan(
     Returns
     -------
     list of dict
-        送った要求の記録。
+        送ったリクエストの記録。
     """
     records = []
     for r in plan:

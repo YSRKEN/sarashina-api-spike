@@ -30,7 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--models", nargs="+", default=list(DEFAULT_MODELS), help="送り先のモデル")
     p.add_argument("--n", type=int, default=DEFAULT_N, help="1 リクエストの候補数（1〜5）")
     p.add_argument("--category", choices=sorted(CATEGORIES), action="append", help="分野で絞る（複数可）")
-    p.add_argument("--dry-run", action="store_true", help="送る要求と所要時間の見積もりを出し、送らない")
+    p.add_argument("--dry-run", action="store_true", help="送るリクエストと所要時間の見積もりを出し、送らない")
     p.add_argument("--log-dir", type=Path, default=None, help="記録の置き場（既定は logs/）")
     p.add_argument("--resume", metavar="RUN_ID", default=None,
                    help="この run_id の実行を再開し、HTTP 200 で済んだ (モデル, 設問) を送らない")

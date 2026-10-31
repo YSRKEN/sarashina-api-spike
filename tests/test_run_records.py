@@ -62,14 +62,14 @@ class RunRecordsTest(unittest.TestCase):
         rows = [{"id": i, "category": "math", "prompt": "p", "expected": "3",
                  "grading": {"method": "numeric"}, "intent": "i"} for i in ("q1", "q2")]
         (qdir / "q.jsonl").write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
-        reports = Path(tempfile.mkdtemp())
+        results = Path(tempfile.mkdtemp())
         argv = ["--run-id", RUN_ID, "--log-dir", str(self.logs), "--questions", str(qdir),
-                "--reports-dir", str(reports), "--note", "再採点"]
+                "--results-dir", str(results), "--note", "再採点"]
         with redirect_stdout(io.StringIO()), mock.patch.object(code_runner, "docker_available", return_value=False):
             self.assertEqual(score.main(argv), 0)
             self.assertEqual(score.main(argv), 0)
         # 2 回採点しても同じ名前（上書き）で、採点した日ではなく最初の送信の日が入る。
-        self.assertEqual([p.name for p in reports.iterdir()], ["2026-10-11-abcdef01-scores.csv"])
+        self.assertEqual([p.name for p in results.iterdir()], ["2026-10-11-" + RUN_ID + "-chat-scores.csv"])
         runs = [json.loads(l) for l in (self.logs / "runs.jsonl").read_text(encoding="utf-8").splitlines()]
         self.assertEqual(len(runs), 2)
         self.assertEqual(runs[0]["note"], "再採点")

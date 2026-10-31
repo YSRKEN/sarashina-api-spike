@@ -1,7 +1,7 @@
 """ログから答えを取り出して自動採点し、分野×モデルの得点を CSV に出す。
 
 ログ（``logs/*.jsonl``）は読むだけで書き換えない。答えごとの採点結果は
-``logs/scores/<run_id>.jsonl`` に、集計は ``reports/<日付>-<run_id の先頭 8 文字>-scores.csv`` に出す。
+``logs/scores/<run_id>.jsonl`` に、集計は ``results/<日付>-<run_id の全部>-chat-scores.csv`` に出す。
 日付はその実行の最初の送信（``sent_at``）の UTC 日付。採点のたびに ``logs/runs.jsonl`` へ 1 行足す。
 
 使い方::
@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from sarashina_eval import code_runner
+from sarashina_eval.results import CHAT_COLUMNS, scores_csv_path
 from sarashina_eval.questions import Question, load_questions
 from sarashina_eval.run_log import append_run, run_date
 from sarashina_eval.run_snapshot import snapshot_paths
@@ -294,8 +295,9 @@ def summarize(
     Returns
     -------
     tuple
-        ``(見出し, 行の並び)``。行は分野、列はモデルごとに
-        ``<model>:accuracy``・``:answers``・``:all_correct``・``:partial``・``:none_correct``・``:ungraded``。
+        ``(見出し, 行の並び)``。縦長で、1 行が 1 モデル × 1 分野。見出しは
+        ``model, category, accuracy, answers, all_correct, partial, none_correct, ungraded``
+        （CSV にはこの前に ``run_id, run_date`` を足す）。モデル、分野の順に並べる。
     """
     per_q: dict[tuple[str, str, str], list[str]] = {}
     for s in scores:
@@ -317,17 +319,14 @@ def summarize(
     for m, c, _ in ungraded:
         cell(c, m)["ungraded"] += 1
 
-    suffixes = ("accuracy", "answers", "all_correct", "partial", "none_correct", "ungraded")
-    header = ["category"] + [f"{m}:{s}" for m in models for s in suffixes]
+    header = list(CHAT_COLUMNS[2:])
     rows = []
-    for c in cats:
-        row: dict[str, Any] = {"category": c}
-        for m in models:
+    for m in models:
+        for c in cats:
             st = cell(c, m)
             acc = f"{st['correct'] / st['answers']:.3f}" if st["answers"] else ""
-            vals = (acc, st["answers"], st["all"], st["partial"], st["none"], st["ungraded"])
-            row.update({f"{m}:{s}": v for s, v in zip(suffixes, vals)})
-        rows.append(row)
+            vals = (m, c, acc, st["answers"], st["all"], st["partial"], st["none"], st["ungraded"])
+            rows.append(dict(zip(header, vals)))
     return header, rows
 
 
@@ -337,16 +336,16 @@ def write_outputs(
     rows: list[dict[str, Any]],
     run_id: str,
     scores_dir: Path,
-    reports_dir: Path,
+    results_dir: Path,
     today: date,
 ) -> tuple[Path, Path]:
     """採点結果の JSONL と得点の CSV を書く。
 
-    CSV の名前は ``<today>-<run_id の先頭 8 文字>-scores.csv``。``today`` には実行の最初の送信の
+    CSV の名前は ``<today>-<run_id の全部>-chat-scores.csv``。``today`` には実行の最初の送信の
     UTC 日付を渡す（同じ実行を採点し直すと同じ名前で上書きし、別の実行とは重ならない）。
 
     JSONL は答えの本文を含むので、公開しない置き場（既定 ``logs/scores/``）に置く。
-    CSV には本文を入れない。
+    CSV には本文を入れない。列は ``run_id, run_date`` に ``header`` を続けたもの。
 
     Returns
     -------
@@ -354,16 +353,16 @@ def write_outputs(
         ``(JSONL のパス, CSV のパス)``。
     """
     scores_dir.mkdir(parents=True, exist_ok=True)
-    reports_dir.mkdir(parents=True, exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
     jsonl = scores_dir / f"{run_id}.jsonl"
     with jsonl.open("w", encoding="utf-8") as f:
         for s in scores:
             f.write(json.dumps(asdict(s), ensure_ascii=False) + "\n")
-    csv_path = reports_dir / f"{today:%Y-%m-%d}-{run_id[:8]}-scores.csv"
+    csv_path = scores_csv_path(results_dir, today, run_id, "chat")
     with csv_path.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=header)
+        w = csv.DictWriter(f, fieldnames=["run_id", "run_date", *header])
         w.writeheader()
-        w.writerows(rows)
+        w.writerows({"run_id": run_id, "run_date": f"{today:%Y-%m-%d}", **r} for r in rows)
     return jsonl, csv_path
 
 
@@ -375,7 +374,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--questions", type=Path, default=None,
                    help="照合する問題集（既定は <log-dir>/runs/<run_id>/ の写し、無ければ questions/）")
     p.add_argument("--scores-dir", type=Path, default=None, help="既定は <log-dir>/scores")
-    p.add_argument("--reports-dir", type=Path, default=ROOT / "reports")
+    p.add_argument("--results-dir", type=Path, default=ROOT / "results")
     p.add_argument("--note", default=None, help="この採点の目的（logs/runs.jsonl に残す）")
     a = p.parse_args(argv)
     if a.questions is not None:
@@ -397,7 +396,7 @@ def main(argv: list[str] | None = None) -> int:
     header, rows = summarize(scores, ungraded)
     day = run_date(a.log_dir, a.run_id) or date.today()
     jsonl, csv_path = write_outputs(
-        scores, header, rows, a.run_id, a.scores_dir or a.log_dir / "scores", a.reports_dir, day
+        scores, header, rows, a.run_id, a.scores_dir or a.log_dir / "scores", a.results_dir, day
     )
     counts = {"answers": len(scores), "ungraded": len(ungraded)}
     for s in scores:

@@ -301,7 +301,7 @@ class CasesTest(unittest.TestCase):
 
 
 class EndToEndTest(_ServerCase):
-    """達成条件: 入口で流して採点し、logs/ に本文、reports/ に本文なしの CSV を出す。"""
+    """達成条件: 入口で流して採点し、logs/ に本文、results/ に本文なしの CSV を出す。"""
 
     def _main(self, *argv: str) -> tuple[int, str]:
         factory = functools.partial(SarashinaClient, FAKE_KEY, base_url=self.base_url, clock=self.clock)
@@ -329,8 +329,8 @@ class EndToEndTest(_ServerCase):
         # 実行の一覧は API の記録として読まれない（再開の判定を崩さない）。
         self.assertEqual(len(completed_attempts(self.log_dir, "run-e2e")), 13)
 
-        reports = self.dir / "reports"
-        code, out = self._main("score", "--run-id", "run-e2e", "--reports-dir", str(reports))
+        results = self.dir / "results"
+        code, out = self._main("score", "--run-id", "run-e2e", "--results-dir", str(results))
         self.assertEqual(code, 0)
         scores = [json.loads(l) for l in (self.log_dir / "scores" / "run-e2e-non-chat.jsonl")
                   .read_text(encoding="utf-8").splitlines()]
@@ -343,7 +343,7 @@ class EndToEndTest(_ServerCase):
         self.assertEqual(by_id["rerank-tmp-01"]["status"], WRONG)
         self.assertEqual(by_id["tr-tmp-01"]["status"], UNGRADED)
         self.assertEqual(by_id["tr-tmp-01"]["content"], "TRANSLATED:明日は雨が降るでしょう。")
-        csv_files = list(reports.glob("*-non-chat-scores.csv"))
+        csv_files = list(results.glob("*-non-chat-scores.csv"))
         self.assertEqual(len(csv_files), 1)
         runs = [json.loads(l) for l in (self.log_dir / "runs.jsonl").read_text(encoding="utf-8").splitlines()]
         self.assertEqual([r["event"] for r in runs][-1], "score")
@@ -356,6 +356,8 @@ class EndToEndTest(_ServerCase):
         self.assertNotIn("明日は雨", text)
         rows = list(csv.DictReader(io.StringIO(text)))
         self.assertEqual(len(rows), 8)
+        self.assertEqual(list(rows[0])[:3], ["run_id", "run_date", "kind"])
+        self.assertEqual(rows[0]["run_id"], "run-e2e")
 
     def test_missing_records(self) -> None:
         cases = load_cases([FIXTURE_INPUTS], ["rerank"])

@@ -46,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.choices["score"]
     s.add_argument("--run-id", required=True)
     s.add_argument("--scores-dir", type=Path, default=None, help="既定は <log-dir>/scores")
-    s.add_argument("--reports-dir", type=Path, default=ROOT / "reports")
+    s.add_argument("--results-dir", type=Path, default=ROOT / "results")
     return p
 
 
@@ -105,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
         print("採点する入力が無い", file=sys.stderr)
         return 1
     jsonl, csv_path = write_outputs(scores, a.run_id, a.scores_dir or a.log_dir / "scores",
-                                    a.reports_dir, run_date(a.log_dir, a.run_id) or date.today())
+                                    a.results_dir, run_date(a.log_dir, a.run_id) or date.today())
     counts = {"cases": len(scores)}
     for s in scores:
         counts[s.status] = counts.get(s.status, 0) + 1

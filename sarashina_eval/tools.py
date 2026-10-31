@@ -28,6 +28,7 @@ from typing import Any, Protocol
 
 from sarashina_eval import fake_tools
 from sarashina_eval.models import MODEL_RPM
+from sarashina_eval.results import scores_csv_path
 from sarashina_eval.run_log import append_run, iter_records, run_date, run_log_files
 from sarashina_eval.run_snapshot import question_files, save_snapshot, snapshot_paths
 from sarashina_eval.score import normalize_text
@@ -342,13 +343,13 @@ def score_conversation(rec: dict[str, Any], scenario: Scenario, condition: str) 
     return s
 
 
-CSV_HEADER = ["model", "scenario_id", "condition", "status", "passed", "rounds", "truncated", "n_calls",
+CSV_HEADER = ["run_id", "run_date", "model", "scenario_id", "condition", "status", "passed", "rounds", "truncated", "n_calls",
               "called_expected", "args_json_ok", "args_match", "unexpected_calls", "facts_found", "facts_total"]
 
 
-def csv_row(s: ToolScore) -> dict[str, Any]:
-    """本文を含まない CSV の 1 行にする。"""
-    return {"model": s.model, "scenario_id": s.scenario_id, "condition": s.condition, "status": s.status,
+def csv_row(s: ToolScore, day: date) -> dict[str, Any]:
+    """本文を含まない CSV の 1 行にする。``day`` は実行の最初の送信の UTC 日付。"""
+    return {"run_id": s.run_id, "run_date": f"{day:%Y-%m-%d}", "model": s.model, "scenario_id": s.scenario_id, "condition": s.condition, "status": s.status,
             "passed": int(s.passed), "rounds": s.rounds, "truncated": int(s.truncated), "n_calls": len(s.calls),
             "called_expected": int(s.called_expected), "args_json_ok": int(s.args_json_ok),
             "args_match": int(s.args_match), "unexpected_calls": s.unexpected_calls,
@@ -373,20 +374,20 @@ def score_run(log_dir: Path, run_id: str, scenarios: dict[str, Scenario]) -> tup
     return scores, unknown
 
 
-def write_outputs(scores: list[ToolScore], run_id: str, scores_dir: Path, reports_dir: Path,
+def write_outputs(scores: list[ToolScore], run_id: str, scores_dir: Path, results_dir: Path,
                   day: date) -> tuple[Path, Path]:
     """本文つきの JSONL（``<scores_dir>/<run_id>-tools.jsonl``）と本文なしの CSV を書く。"""
     scores_dir.mkdir(parents=True, exist_ok=True)
-    reports_dir.mkdir(parents=True, exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
     jsonl = scores_dir / f"{run_id}-tools.jsonl"
     with jsonl.open("w", encoding="utf-8") as f:
         for s in scores:
             f.write(json.dumps(asdict(s), ensure_ascii=False) + "\n")
-    csv_path = reports_dir / f"{day:%Y-%m-%d}-{run_id[:8]}-tools-scores.csv"
+    csv_path = scores_csv_path(results_dir, day, run_id, "tools")
     with csv_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=CSV_HEADER)
         w.writeheader()
-        w.writerows(csv_row(s) for s in scores)
+        w.writerows(csv_row(s, day) for s in scores)
     return jsonl, csv_path
 
 
@@ -412,7 +413,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--log-dir", type=Path, default=ROOT / "logs")
     s.add_argument("--scenarios", type=Path, default=None, help="既定は <log-dir>/runs/<run_id>/ の写し")
     s.add_argument("--scores-dir", type=Path, default=None)
-    s.add_argument("--reports-dir", type=Path, default=ROOT / "reports")
+    s.add_argument("--results-dir", type=Path, default=ROOT / "results")
     s.add_argument("--note", default=None)
     return p
 
@@ -465,7 +466,7 @@ def _score(a: argparse.Namespace, argv: list[str]) -> int:
         print(f"run_id {a.run_id} の会話の記録が無い", file=sys.stderr)
         return 1
     day = run_date(a.log_dir, a.run_id) or date.today()
-    jsonl, csv_path = write_outputs(scores, a.run_id, a.scores_dir or a.log_dir / "scores", a.reports_dir, day)
+    jsonl, csv_path = write_outputs(scores, a.run_id, a.scores_dir or a.log_dir / "scores", a.results_dir, day)
     counts = {"conversations": len(scores), "passed": sum(s.passed for s in scores),
               "truncated": sum(s.truncated for s in scores)}
     append_run(a.log_dir, event="score", run_id=a.run_id, entry="sarashina_eval.tools", note=a.note,

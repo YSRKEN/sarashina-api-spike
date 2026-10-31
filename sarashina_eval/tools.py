@@ -27,7 +27,8 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from sarashina_eval import fake_tools
-from sarashina_eval.models import MODEL_RPM
+from sarashina_eval.client_options import timeout_kwargs
+from sarashina_eval.models import MODEL_RPM, REASONING_EFFORTS, reasoning_params
 from sarashina_eval.results import scores_csv_path
 from sarashina_eval.run_log import append_run, iter_records, run_date, run_log_files
 from sarashina_eval.run_snapshot import question_files, save_snapshot, snapshot_paths
@@ -150,7 +151,12 @@ def _message_of(record: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def run_conversation(
-    client: ChatSender, model: str, scenario: Scenario, condition: str, max_rounds: int = DEFAULT_MAX_ROUNDS
+    client: ChatSender,
+    model: str,
+    scenario: Scenario,
+    condition: str,
+    max_rounds: int = DEFAULT_MAX_ROUNDS,
+    reasoning_effort: str | None = None,
 ) -> list[dict[str, Any]]:
     """1 会話を往復させる。
 
@@ -163,6 +169,8 @@ def run_conversation(
         ``CONDITIONS`` の鍵。
     max_rounds : int
         送る回数の上限。上限の回でもまだ ``tool_calls`` が来たら打ち切る。
+    reasoning_effort : str, optional
+        推論の強さ（思考モデルだけ）。毎回の送信に付ける。
 
     Returns
     -------
@@ -172,9 +180,10 @@ def run_conversation(
     choose = CONDITIONS[condition]
     messages = scenario.messages()
     tools = fake_tools.tool_definitions(scenario.tools)
+    extra = reasoning_params([model], reasoning_effort)
     records = []
     for rnd in range(1, max_rounds + 1):
-        params: dict[str, Any] = {"tools": tools}
+        params: dict[str, Any] = {"tools": tools, **extra}
         tc = choose(rnd)
         if tc is not None:
             params["tool_choice"] = tc
@@ -196,14 +205,17 @@ def run_conversation(
     return records
 
 
-def plan(scenarios: list[Scenario], models: list[str], conditions: list[str]) -> list[tuple[str, Scenario, str]]:
+def plan(
+    scenarios: list[Scenario], models: list[str], conditions: list[str], reasoning_effort: str | None = None
+) -> list[tuple[str, Scenario, str]]:
     """送る会話を ``(model, scenario, condition)`` で並べる。
 
     Raises
     ------
     ValueError
-        知らないモデル・条件のとき。
+        知らないモデル・条件か、推論の強さを受け付けないモデルのとき。
     """
+    reasoning_params(models, reasoning_effort)
     for m in models:
         if m not in MODEL_RPM or m == "sarashina3-guard":
             raise ValueError(f"tools を使えないか知らないモデル: {m}")
@@ -403,6 +415,9 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--models", nargs="+", default=list(DEFAULT_MODELS))
     r.add_argument("--tool-choice", nargs="+", default=list(DEFAULT_CONDITIONS), choices=list(CONDITIONS),
                    help="条件。omit は tool_choice を送らない（API の既定 required）。required-first は 1 回目だけ required")
+    r.add_argument("--reasoning-effort", choices=list(REASONING_EFFORTS), default=None,
+                   help="推論の強さ（思考モデルだけ）。省略時は送らない")
+    r.add_argument("--timeout", type=float, default=None, help="1 リクエストの時間切れの秒数（既定 60）")
     r.add_argument("--max-rounds", type=int, default=DEFAULT_MAX_ROUNDS, help="1 会話の送信の上限")
     r.add_argument("--dry-run", action="store_true", help="送る予定を出し、送らない")
     r.add_argument("--log-dir", type=Path, default=None)
@@ -421,7 +436,7 @@ def build_parser() -> argparse.ArgumentParser:
 def _run(a: argparse.Namespace, argv: list[str]) -> int:
     try:
         scenarios = load_scenarios(a.paths)
-        items = plan(scenarios, a.models, a.tool_choice)
+        items = plan(scenarios, a.models, a.tool_choice, a.reasoning_effort)
     except ValueError as e:
         print(e, file=sys.stderr)
         return 2
@@ -433,7 +448,7 @@ def _run(a: argparse.Namespace, argv: list[str]) -> int:
         return 0
     from sarashina_eval.client import SarashinaClient  # 実際に送るときだけ（API キーを読むのはここだけ）
 
-    client = SarashinaClient(log_dir=a.log_dir, run_id=a.resume)
+    client = SarashinaClient(log_dir=a.log_dir, run_id=a.resume, **timeout_kwargs(a.timeout))
     log_dir = a.log_dir if a.log_dir is not None else ROOT / "logs"
     snap = save_snapshot(log_dir, client.run_id, questions=(a.paths, {s.id for s in scenarios}))
     done = {k for k, rec in latest_records(log_dir, client.run_id).items() if is_finished(rec, a.max_rounds)}
@@ -441,7 +456,7 @@ def _run(a: argparse.Namespace, argv: list[str]) -> int:
     for model, sc, cond in items:
         if (model, f"{sc.id}{SEP}{cond}") in done:
             continue
-        sent += len(run_conversation(client, model, sc, cond, a.max_rounds))
+        sent += len(run_conversation(client, model, sc, cond, a.max_rounds, a.reasoning_effort))
         conv += 1
     print(f"会話 {conv} 件、送信 {sent} 件、run_id={client.run_id}")
     append_run(log_dir, event="send", run_id=client.run_id, entry="sarashina_eval.tools", note=a.note,

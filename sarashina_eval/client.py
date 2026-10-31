@@ -109,6 +109,8 @@ class SarashinaClient:
         この実行の識別子。省略時は UUID を振る。
     rpm_by_model : dict[str, int], optional
         モデルごとの上限回数。既定は ``MODEL_RPM``。
+    timeout_sec : float, optional
+        1 リクエストの時間切れの秒数。既定は ``TIMEOUT_SEC``。
     """
 
     def __init__(
@@ -120,7 +122,11 @@ class SarashinaClient:
         log_dir: Path | None = None,
         run_id: str | None = None,
         rpm_by_model: dict[str, int] | None = None,
+        timeout_sec: float = TIMEOUT_SEC,
     ) -> None:
+        if timeout_sec <= 0:
+            raise ValueError(f"timeout_sec は正の数（指定は {timeout_sec}）")
+        self._timeout_sec = timeout_sec
         key = load_api_key() if api_key is None else api_key.strip()
         if not key:
             raise ApiKeyMissingError(
@@ -398,6 +404,7 @@ class SarashinaClient:
             "attempt": attempt,
             "wait_before_send_sec": round(waited, 3),
             "is_retry_after_429": is_retry_after_429,
+            "timeout_sec": self._timeout_sec,
             "request": {"method": "POST", "url": url, "headers": _redact_headers(headers), "body": body},
         }
         req = urllib.request.Request(
@@ -406,7 +413,7 @@ class SarashinaClient:
         sent = self._clock.now()
         error = None
         try:
-            with urllib.request.urlopen(req, timeout=TIMEOUT_SEC) as resp:
+            with urllib.request.urlopen(req, timeout=self._timeout_sec) as resp:
                 status, resp_headers, raw = resp.status, list(resp.headers.items()), resp.read()
         except urllib.error.HTTPError as e:
             status, resp_headers, raw = e.code, list(e.headers.items()), e.read()

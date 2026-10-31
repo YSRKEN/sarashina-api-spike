@@ -37,6 +37,7 @@ class _Handler(BaseHTTPRequestHandler):
 
     received: list[dict] = []
     loop = False
+    reasoning: str | None = None
 
     def do_POST(self) -> None:  # noqa: N802
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
@@ -48,6 +49,8 @@ class _Handler(BaseHTTPRequestHandler):
                 "function": {"name": "get_weather",
                              "arguments": json.dumps({"city": "ほしぞら市", "date": "2026-10-14"}, ensure_ascii=False)}}]}
             finish = "tool_calls"
+            if _Handler.reasoning is not None:
+                msg["reasoning"] = _Handler.reasoning
         elif last["role"] == "tool":
             res = json.loads(last["content"])
             msg = {"role": "assistant", "content": f"{res['weather']}、最高{res['max_c']}度です。", "tool_calls": []}
@@ -93,6 +96,7 @@ class ToolsFlowTest(unittest.TestCase):
     def setUp(self) -> None:
         _Handler.received = []
         _Handler.loop = False
+        _Handler.reasoning = None
         self.tmp = tempfile.TemporaryDirectory()
         self.log_dir = Path(self.tmp.name)
         self.scenarios = {s.id: s for s in tools.load_scenarios([FIXTURE])}
@@ -128,6 +132,22 @@ class ToolsFlowTest(unittest.TestCase):
         s = tools.score_run(self.log_dir, "run-1", self.scenarios)[0][0]
         self.assertTrue(s.passed)
         self.assertEqual(s.calls, [])
+
+    def test_reasoning_effort_and_encrypted_reasoning_round_trip(self) -> None:
+        _Handler.reasoning = "enc:abc+/="
+        tools.run_conversation(self._client(), "sarashina3.2-mini-thinking", self.scenarios["w"], "auto",
+                               reasoning_effort="low")
+        self.assertEqual([b.get("reasoning_effort") for b in _Handler.received], ["low", "low"])
+        # 2 回目に返す assistant のメッセージに、暗号化された reasoning が改変されずに入る。
+        assistant = [m for m in _Handler.received[1]["messages"] if m["role"] == "assistant"]
+        self.assertEqual(assistant[0]["reasoning"], "enc:abc+/=")
+
+    def test_plan_rejects_effort_for_non_thinking(self) -> None:
+        scs = list(self.scenarios.values())
+        self.assertEqual(len(tools.plan(scs, ["sarashina3.2-mini-thinking"], ["auto"], reasoning_effort="high")),
+                         len(scs))
+        with self.assertRaises(ValueError):
+            tools.plan(scs, ["sarashina3-nano"], ["auto"], reasoning_effort="high")
 
     def test_truncated_at_limit(self) -> None:
         _Handler.loop = True

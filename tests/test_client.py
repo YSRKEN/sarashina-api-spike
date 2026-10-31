@@ -17,6 +17,10 @@ FAKE_KEY = "test-key-not-real"
 START = 1_800_000_000.0  # 2027-01-15 08:00:00 UTC
 
 
+#: 窓の待ちを確かめるための上限（公式の値とは別に固定する）。
+WINDOW_RPM = {"sarashina3-mini": 6, "sarashina3-nano": 60}
+
+
 class FakeClock:
     """sleep で時刻を進めるだけの偽の時計。実際には待たない。"""
 
@@ -74,7 +78,8 @@ class ClientTest(unittest.TestCase):
         self.log_dir = Path(self.tmp.name)
         self.clock = FakeClock(START)
         self.client = SarashinaClient(
-            FAKE_KEY, base_url=self.base_url, clock=self.clock, log_dir=self.log_dir, run_id="run-1"
+            FAKE_KEY, base_url=self.base_url, clock=self.clock, log_dir=self.log_dir, run_id="run-1",
+            rpm_by_model=WINDOW_RPM,
         )
 
     def tearDown(self) -> None:
@@ -87,14 +92,35 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(
             MODEL_RPM,
             {
-                "sarashina3-mini": 6,
+                "sarashina3.2-mini-thinking": 30,
+                "sarashina3-mini": 30,
                 "sarashina3-guard": 6,
-                "sarashina3-translate": 6,
+                "sarashina3-translate": 30,
                 "sarashina3-nano": 60,
                 "sarashina3-embedding": 60,
                 "sarashina3-rerank": 60,
             },
         )
+
+    def test_timeout_default_and_override(self) -> None:
+        seen = []
+
+        def fake_urlopen(req, timeout):
+            seen.append(timeout)
+            raise TimeoutError("timed out")
+
+        with mock.patch("sarashina_eval.client.urllib.request.urlopen", fake_urlopen):
+            self._chat()
+            slow = SarashinaClient(FAKE_KEY, base_url=self.base_url, clock=self.clock, log_dir=self.log_dir,
+                                   run_id="run-2", timeout_sec=180)
+            rec = slow.chat("sarashina3.2-mini-thinking", [{"role": "user", "content": "x"}])
+        self.assertEqual(seen, [60, 180])
+        self.assertEqual(rec["error"]["type"], "TimeoutError")
+        self.assertEqual(rec["timeout_sec"], 180)
+
+    def test_timeout_must_be_positive(self) -> None:
+        with self.assertRaises(ValueError):
+            SarashinaClient(FAKE_KEY, base_url=self.base_url, clock=self.clock, log_dir=self.log_dir, timeout_sec=0)
 
     def test_mini_seventh_send_waits_until_61s_after_first(self) -> None:
         sent_times = []

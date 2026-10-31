@@ -1,0 +1,11 @@
+{
+ "run_id": "6587cdd3-400a-4ecd-b717-987aa236bee5",
+ "files": [
+  {
+   "path": "questions/sample.jsonl",
+   "source": "後から補った（送信時は一時ファイル。今の questions/ の同じ ID の行）",
+   "kind": "questions"
+  }
+ ],
+ "backfilled": true
+}

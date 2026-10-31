@@ -1,0 +1,35 @@
+{
+  "run_id": "31fb3e0c-4e0f-40ad-b941-09cc1eaeb41d",
+  "files": [
+    {
+      "path": "questions/code.jsonl",
+      "source": "questions/code.jsonl",
+      "kind": "questions"
+    },
+    {
+      "path": "questions/instruction.jsonl",
+      "source": "questions/instruction.jsonl",
+      "kind": "questions"
+    },
+    {
+      "path": "questions/japanese.jsonl",
+      "source": "questions/japanese.jsonl",
+      "kind": "questions"
+    },
+    {
+      "path": "questions/knowledge.jsonl",
+      "source": "questions/knowledge.jsonl",
+      "kind": "questions"
+    },
+    {
+      "path": "questions/logic.jsonl",
+      "source": "questions/logic.jsonl",
+      "kind": "questions"
+    },
+    {
+      "path": "questions/math.jsonl",
+      "source": "questions/math.jsonl",
+      "kind": "questions"
+    }
+  ]
+}

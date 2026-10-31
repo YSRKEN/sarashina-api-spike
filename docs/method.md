@@ -9,7 +9,7 @@
 - 自作の問題集で、6 分野 61 問。公式のベンチマークの再現ではない
 - 問題の多くは Claude（Opus 5.5）が下書きし、リポジトリの作者が確かめた
 
-問題は `questions/` の JSONL に、分野ごとに 1 ファイルずつ置いてある。Chat 以外のモデルの入力は `inputs/`、Tool Calling の場面は `tool_scenarios/` にある。安全判定（guard）の 18 件のうち、リポジトリの作者が書いた 12 件は公開しない（`inputs_private/`。リポジトリに入れていない）。
+問題は `questions/` の JSONL に、分野ごとに 1 ファイルずつ置いてある。Chat 以外のモデルの入力は `inputs/`、Tool Calling の場面は `tool_scenarios/` にある。安全判定（guard）の 18 件のうち、リポジトリの作者が書いた 12 件は `inputs_private/` にある。
 
 問題の多くを Claude が下書きしたので、設問の言い回しが同じ系列の Claude に読み取りやすい形になっているおそれがある。ほかの会社のモデルとの比較で、Claude Haiku 5.5 に有利に働いた可能性を否定できない（[comparison.md](comparison.md)）。
 
@@ -55,6 +55,19 @@
 | GPT-6 Luna（low） | `gpt6luna-low-8b0ad329` | 2026-10-13 | `2026-10-13-gpt6luna-low-8b0ad329-chat-scores.csv` |
 
 本番の前に、仕組みを確かめるための試しの実行を 4 回行った。その結果は [history.md](history.md) に、得点の CSV は `results/trial/` にある。
+
+## 実行の記録
+
+追試や採点のし直しに使えるよう、実行の記録を `logs/` に置いている。どの実行も実行 ID で分かれていて、日付の違う測定が混ざらない。
+
+| 置き場 | 中身 |
+|---|---|
+| `logs/<日付>.jsonl` | API との往復を 1 行ずつ。送った本文（モデル・引数・`n`・推論の強さ）、応答、送った時刻、所要時間、時間切れの秒数。認証のヘッダーは伏せてある |
+| `logs/runs.jsonl` | 実行と採点の一覧。入口・引数・件数・書いたファイル |
+| `logs/runs/<実行 ID>/` | 送る直前に写した問題集と入力 |
+| `logs/scores/` | 答えごとの採点の結果 |
+
+記録に書くパスはリポジトリからの相対で、流したマシンのパスやマシンの名前は入れていない。2026-10-13 の記録は別のマシンで流したもので、公開する前にパスを相対に置き換えた。
 
 README の得点表に載せる実行は `results/readme-runs.json` で決め、`python3 -m sarashina_eval.readme_table` で書き込む。
 

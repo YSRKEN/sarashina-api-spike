@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest import mock
 
 from sarashina_eval import code_runner, score
-from sarashina_eval.run_log import append_run, iter_records, run_date, run_log_files
+from sarashina_eval.run_log import append_run, iter_records, repo_relative, run_date, run_log_files
 
 RUN_ID = "abcdef0123456789"
 
@@ -21,6 +21,9 @@ def _rec(sent_at: str, run_id: str = RUN_ID, qid: str = "q1") -> dict:
     return {"run_id": run_id, "question_id": qid, "sent_at": sent_at,
             "request": {"body": {"model": "m"}},
             "response": {"status": 200, "body_json": {"choices": [{"message": {"content": "答え 3"}}]}}}
+
+
+REPO = Path(__file__).resolve().parent.parent
 
 
 class RunRecordsTest(unittest.TestCase):
@@ -56,6 +59,16 @@ class RunRecordsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             append_run(self.logs, event="x", run_id=RUN_ID, entry="e", note=None, resumed=False,
                        counts={}, outputs=[], argv=[])
+
+    def test_paths_inside_repo_are_written_relative(self) -> None:
+        # 公開する記録に、流したマシンのパスを残さない。
+        inside = REPO / "logs" / "scores" / "x.jsonl"
+        row = append_run(self.logs, event="score", run_id=RUN_ID, entry="e", note=None, resumed=False,
+                         counts={}, outputs=[inside], argv=[],
+                         reference={"source": "current", "paths": [str(REPO / "questions")]})
+        self.assertEqual(row["outputs"], ["logs/scores/x.jsonl"])
+        self.assertEqual(row["reference"]["paths"], ["questions"])
+        self.assertEqual(repo_relative(Path("/elsewhere/a.txt")), str(Path("/elsewhere/a.txt")))
 
     def test_score_main_names_csv_by_run_date_and_appends_runs(self) -> None:
         qdir = Path(tempfile.mkdtemp())

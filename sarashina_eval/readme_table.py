@@ -34,6 +34,8 @@ CATEGORIES: tuple[tuple[str, str], ...] = (
 
 #: 採点した答えが 0 の分野に出す語（数は出さない）。
 DRAFT = "下書きの判定"
+#: その実行でまだ採点していない分野（``readme-runs.json`` の ``unscored``）に書く語。
+UNSCORED = "未採点"
 
 
 def load_runs(path: Path) -> tuple[list[dict[str, str]], dict[str, str]]:
@@ -63,27 +65,33 @@ def build_table(results_dir: Path, runs: list[dict[str, str]], names: dict[str, 
 
     列は一覧の順（「参考」の実行は右端へ寄せ、その中は一覧の順）に、モデルごとに 1 列。
     列の見出しは ``<表示名>（<見出し>）``。表示名は ``names`` に無ければモデルの ID。
-    採点した答えが 0 の分野は ``下書きの判定``。その列に行が無い分野は ``-``。
+    採点した答えが 0 の分野は ``下書きの判定``。ただし実行の ``unscored`` に挙げた分野は ``未採点``。
+    その列に行が無い分野は ``-``。
     """
     names = names or {}
     ordered = sorted(runs, key=lambda r: "参考" in r["heading"])  # 安定な並べ替え
-    columns: list[tuple[str, dict[str, dict[str, str]]]] = []
+    columns: list[tuple[str, dict[str, dict[str, str]], frozenset[str]]] = []
     for run in ordered:
         by_model: dict[str, dict[str, dict[str, str]]] = {}
         for row in _read_run(results_dir, run["run_id"]):
             by_model.setdefault(row["model"], {})[row["category"]] = row
         for model, cats in by_model.items():
-            columns.append((f"{names.get(model, model)}（{run['heading']}）", cats))
-    lines = ["| 分野 | " + " | ".join(h for h, _ in columns) + " |",
+            columns.append((f"{names.get(model, model)}（{run['heading']}）", cats, frozenset(run.get("unscored", []))))
+    lines = ["| 分野 | " + " | ".join(h for h, _, _ in columns) + " |",
              "|---" * (len(columns) + 1) + "|"]
-    present = {c for _, cats in columns for c in cats}
+    present = {c for _, cats, _ in columns for c in cats}
     for key, label in CATEGORIES:
         if key not in present:
             continue
         cells = []
-        for _, cats in columns:
+        for _, cats, unscored in columns:
             row = cats.get(key)
-            cells.append("-" if row is None else row["accuracy"] if int(row["answers"]) > 0 else DRAFT)
+            if row is None:
+                cells.append("-")
+            elif key in unscored:
+                cells.append(UNSCORED)
+            else:
+                cells.append(row["accuracy"] if int(row["answers"]) > 0 else DRAFT)
         lines.append(f"| {label} | " + " | ".join(cells) + " |")
     return "\n".join(lines)
 

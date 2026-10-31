@@ -14,7 +14,8 @@ Sarashina API の Chat の 2 モデル（sarashina3-mini・nano）と Chat 以�
 | 日本語の説明や言い換えは妥当か | 10 問中、mini は 8 問、nano は 6 問が妥当（下書きの判定）。要約の字数の上限は、両モデルともほとんど守れなかった | [docs/chat.md](docs/chat.md#日本語) |
 | 知識はいつまでのものか | mini は 2025 年前半ごろ、nano は 2024 年前半〜後半ごろと推定した。自己申告の「2025 年 9 月」は当てにならない。知らない出来事を、作り話で答えることがある（下書きの判定） | [docs/chat.md](docs/chat.md#知識の打ち切り) |
 | 安全判定・埋め込み・並べ替え・翻訳は使えるか、Chat で代用できるか | 使える。埋め込みと並べ替えは全問正解、安全判定は 18 件中 17 件で合った。安全判定は汎用の Chat のモデルのほうが正確だったが、専用モデルは 100 ms 前後で返る | [docs/non-chat.md](docs/non-chat.md) |
-| Tool Calling は使えるか、何に気をつけるか | `tool_choice: "auto"` を明示すれば、8 つの場面をすべてこなした。省くとツールを呼び続けて答えない（OpenAI と既定が違う） | [docs/tool-calling.md](docs/tool-calling.md) |
+| Tool Calling は使えるか、何に気をつけるか | 使える。2026-10-31 には `tool_choice` を省いても 8 つの場面をすべてこなした。2026-10-13 は省くとツールを呼び続けて答えなかったので、古い版を使う所では `auto` を明示すると確実 | [docs/tool-calling.md](docs/tool-calling.md) |
+| 2026-10-29 に出た 3.2 mini thinking はどうか | 数学と指示追従は推論の強さによらず 1.000 で、mini・nano を上回った。論理は 0.733〜0.833 で nano とほぼ同じだった。推論の強さを変えたときの差は、論理で答え 3 個分、応答の時間の中央値で 0.6 秒（どれも 8 秒前後）にとどまった | [docs/chat.md](docs/chat.md#32-mini-thinking) |
 | Claude Haiku 5.5・GPT-6 Luna と比べてどうか | どちらも Sarashina より一段上と読める。Haiku は自動で採点した 40 問をすべて正解した。差の大きさは、この問題集では測れない | [docs/comparison.md](docs/comparison.md) |
 | 応答の速さ・時間切れ・レート制限はどうか | nano は中央値 255 ms で、mini の半分ほど。mini は同じ日に 4 回、60 秒の時間切れを起こした。429 は 171 回の送信で 0 回 | [docs/speed-and-limits.md](docs/speed-and-limits.md) |
 
@@ -23,14 +24,14 @@ Sarashina API の Chat の 2 モデル（sarashina3-mini・nano）と Chat 以�
 表の値は答えごとの正解率（1 問に 3 回答えさせ、答え 1 つずつを採点した割合）。ほかの会社のモデルは条件が違う参考の値である。
 
 <!-- results:start -->
-| 分野 | mini（2026-10-13） | nano（2026-10-13） | Claude Haiku 5.5 low（参考） | GPT-6 Luna low（参考） |
-|---|---|---|---|---|
-| 数学 | 0.667 | 1.000 | 1.000 | 0.900 |
-| 論理 | 0.767 | 0.867 | 1.000 | 0.800 |
-| 指示追従 | 0.800 | 0.733 | 1.000 | 1.000 |
-| コード | 0.933 | 0.933 | 1.000 | 1.000 |
-| 日本語 | 下書きの判定 | 下書きの判定 | 下書きの判定 | 下書きの判定 |
-| 知識 | 下書きの判定 | 下書きの判定 | 下書きの判定 | 下書きの判定 |
+| 分野 | mini（2026-10-13） | nano（2026-10-13） | mini（2026-10-31） | nano（2026-10-31） | 3.2 mini thinking（指定なし） | 3.2 mini thinking（low） | 3.2 mini thinking（medium） | 3.2 mini thinking（high） | Claude Haiku 5.5 low（参考） | GPT-6 Luna low（参考） |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 数学 | 0.667 | 1.000 | 0.633 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.900 |
+| 論理 | 0.767 | 0.867 | 0.733 | 0.800 | 0.800 | 0.733 | 0.833 | 0.767 | 1.000 | 0.800 |
+| 指示追従 | 0.800 | 0.733 | 0.833 | 0.800 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
+| コード | 0.933 | 0.933 | 未採点 | 未採点 | 未採点 | 未採点 | 未採点 | 未採点 | 1.000 | 1.000 |
+| 日本語 | 下書きの判定 | 下書きの判定 | 未採点 | 未採点 | 未採点 | 未採点 | 未採点 | 未採点 | 下書きの判定 | 下書きの判定 |
+| 知識 | 下書きの判定 | 下書きの判定 | 未採点 | 未採点 | 未採点 | 未採点 | 未採点 | 未採点 | 下書きの判定 | 下書きの判定 |
 <!-- results:end -->
 
 日本語と知識は、Claude が下書きし、人がまだ確かめていない判定なので、数値は出していない。測った日付と条件は [docs/method.md](docs/method.md) にある。
@@ -66,7 +67,7 @@ README の得点表は、`results/readme-runs.json` に載せる実行を書い�
 | [docs/tool-calling.md](docs/tool-calling.md) | Tool Calling の振る舞いと、`tool_choice` の注意 |
 | [docs/comparison.md](docs/comparison.md) | Claude Haiku 5.5・GPT-6 Luna との比較と、条件の違い |
 | [docs/speed-and-limits.md](docs/speed-and-limits.md) | 応答の速さと長さ、時間切れ、レート制限 |
-| [docs/method.md](docs/method.md) | 問題集・採点の方式・実行の条件・実行 ID・問題の一覧 |
+| [docs/method.md](docs/method.md) | 問題集・採点の方式・実行の条件・実行 ID・実行の記録・問題の一覧 |
 | [docs/history.md](docs/history.md) | 本番の前の試しの実行で見えた傾向（訂正つき） |
 | [GLOSSARY.md](GLOSSARY.md) | この検証で使う言葉の定義 |
 

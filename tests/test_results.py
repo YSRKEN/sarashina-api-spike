@@ -66,6 +66,13 @@ class ReadmeTableTest(unittest.TestCase):
         self.assertEqual(lines[4], "| 日本語 | 下書きの判定 | 下書きの判定 | 下書きの判定 |")
         self.assertEqual(len(lines), 5)
 
+    def test_unscored_categories_of_a_run_say_so(self) -> None:
+        # まだ採点していない分野は、下書きの判定と取り違えないよう「未採点」と書く。
+        runs = [{"run_id": "ref-low-ab12", "heading": "参考"},
+                {"run_id": "main01", "heading": "2026-10-13", "unscored": ["japanese"]}]
+        lines = readme_table.build_table(self.results, runs).splitlines()
+        self.assertEqual(lines[4], "| 日本語 | 未採点 | 未採点 | 下書きの判定 |")
+
     def test_display_names_replace_model_ids(self) -> None:
         names = {"sarashina3-mini": "mini", "other-model": "Other（low）"}
         lines = readme_table.build_table(self.results, self.runs, names).splitlines()

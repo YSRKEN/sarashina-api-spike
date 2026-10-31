@@ -8,9 +8,6 @@ __pycache__/
 *.pyc
 .venv/
 
-# 公開しない入力（guard の危険側など）
-inputs_private/
-
 # 課題管理と調査メモ（公開しない）
 .scratch/
 

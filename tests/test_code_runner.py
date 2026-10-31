@@ -111,7 +111,7 @@ class DockerRunTest(unittest.TestCase):
                 "def add(a, b):\n    return 99")
         self.assertEqual(self.run_code(code).passed, 0)
 
-    @unittest.skipUnless(SOLUTIONS.is_dir(), "模範解答（tests/code_solutions、コミットしない）が無い")
+    @unittest.skipUnless(SOLUTIONS.is_dir(), "模範解答（tests/code_solutions）が無い")
     def test_reference_solutions_pass(self) -> None:
         for q in load_questions([ROOT / "questions" / "code.jsonl"]):
             sol = (SOLUTIONS / f"{q.id.replace('-', '_')}.py").read_text(encoding="utf-8")

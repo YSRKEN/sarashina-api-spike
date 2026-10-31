@@ -172,6 +172,29 @@ def run_date(log_dir: Path, run_id: str) -> date | None:
     return first.astimezone(timezone.utc).date() if first else None
 
 
+#: リポジトリの直下。記録に書くパスはここからの相対にする。
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def repo_relative(path: Path) -> str:
+    """リポジトリの中のパスを、直下からの相対（``/`` 区切り）にする。外のパスはそのまま返す。
+
+    公開する記録に、流したマシンのパスを残さないため。
+
+    Parameters
+    ----------
+    path : Path
+
+    Returns
+    -------
+    str
+    """
+    try:
+        return path.resolve().relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
 def append_run(
     log_dir: Path,
     *,
@@ -234,11 +257,11 @@ def append_run(
         "note": note,
         "resumed": resumed,
         "counts": counts,
-        "outputs": [str(p) for p in outputs],
+        "outputs": [repo_relative(p) for p in outputs],
         "argv": list(argv),
     }
     if reference is not None:
-        row["reference"] = reference
+        row["reference"] = {**reference, "paths": [repo_relative(Path(p)) for p in reference.get("paths", [])]}
     line = json.dumps(row, ensure_ascii=False) + "\n"  # 書けない値なら、ファイルを開く前に落とす
     log_dir.mkdir(parents=True, exist_ok=True)
     with (log_dir / RUNS_FILE).open("a", encoding="utf-8") as f:

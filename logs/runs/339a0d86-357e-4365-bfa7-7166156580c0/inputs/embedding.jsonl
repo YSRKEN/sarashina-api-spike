@@ -1,0 +1,5 @@
+{"id": "emb-01", "aim": "言い換えを別の話題より近いと見るか", "task_type": "SEMANTIC_SIMILARITY", "anchor": "駅前の図書館は火曜日が休みです。", "near": ["駅の近くにある図書館の休館日は火曜です。"], "far": ["駅前のパン屋は朝七時に開きます。"]}
+{"id": "emb-02", "aim": "質問と答えの文書を、無関係な文書より近いと見るか", "task_type": "RETRIEVAL_QUERY", "candidate_task_type": "RETRIEVAL_DOCUMENT", "anchor": "観葉植物の水やりはどのくらいの頻度がよいですか", "near": ["観葉植物は土の表面が乾いてから、たっぷり水を与えるのが基本です。"], "far": ["自転車のチェーンには、定期的に油を差すと長持ちします。"]}
+{"id": "emb-03", "aim": "語は重なるが意味が逆の文を、言い換えより遠いと見るか", "task_type": "SEMANTIC_SIMILARITY", "anchor": "この会議は延期になりました。", "near": ["会議の日程が後ろにずれました。"], "far": ["この会議は予定どおり開かれます。"]}
+{"id": "emb-04", "aim": "英語と日本語の同じ意味の文を近いと見るか", "task_type": "SEMANTIC_SIMILARITY", "anchor": "雨の日は家で本を読むのが好きです。", "near": ["I like reading books at home on rainy days."], "far": ["I like playing soccer outside on sunny days."]}
+{"id": "emb-05", "aim": "表記ゆれ（ひらがなと漢字）を同じと見るか", "task_type": "SEMANTIC_SIMILARITY", "anchor": "りんごをたべる", "near": ["林檎を食べる"], "far": ["みかんをむく"]}

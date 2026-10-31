@@ -1,0 +1,292 @@
+OpenAI Codex v0.161.0
+--------
+workdir: <一時フォルダ>/f75e54a7-d9f6-469a-ae05-f24ec5ff7e43/scratchpad/luna
+model: gpt-6-luna
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: low
+reasoning summaries: none
+session id: 01a134a7-5c5c-7e32-ab20-acefd81ad8ae
+--------
+user
+これは言語モデルの能力を比べるための試験です。このフォルダの prompts.json にある設問 61 問（[{"id": ..., "prompt": ...}]。正解は入っていない）に、あなた自身の知識と推論だけで答えてください。
+
+決まり:
+- prompts.json を読むことだけにコマンドを使ってよい。それ以外（ほかのファイル、ウェブ検索、コードの実行・計算の実行）は一切しない。他のモデルと「道具なし」の条件をそろえるため
+- 各設問の文に書かれた答え方の指示に、設問ごとに従う
+- 分からない問いは、分からないと答えてよい。推測で作らない
+- 1 問ずつ独立に答える
+
+最後の返答を、次の形の JSON 配列だけにする（前後に説明を書かない）。answer には、その設問へのあなたの答えを、設問の指示どおりの形でそのまま入れる（改行は \n）。61 問すべての id を、ファイルの順で入れる。
+[{"id": "code-001", "answer": "..."}, ...]
+
+hook: UserPromptSubmit
+hook: UserPromptSubmit Completed
+codex
+`prompts.json` だけを読み、設問順に答えを作ります。指定どおり、ほかのファイルや外部検索、計算・実行は使いません。
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+hook: PreToolUse Completed
+exec
+/bin/zsh -lc 'cat prompts.json' in <一時フォルダ>/f75e54a7-d9f6-469a-ae05-f24ec5ff7e43/scratchpad/luna
+ succeeded in 0ms:
+[
+{
+"id": "code-001",
+"prompt": "図書館の棚に 1 から順に番号を振ります。番号 n（1 以上の整数）を受け取り、棚の札の文字列を返す関数 `shelf_label(n: int) -> str` を書いてください。札は、番号を 4 桁に 0 埋めし（4 桁を超える番号はそのまま）、先頭に \"S-\" を付けたものです。例: shelf_label(7) は \"S-0007\"、shelf_label(12345) は \"S-12345\"。\n\n関数のシグネチャ: `def shelf_label(n: int) -> str`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "code-002",
+"prompt": "英小文字だけの文字列 s を受け取り、母音（a, e, i, o, u）が 1 文字以上続く「かたまり」がいくつあるかを返す関数 `count_vowel_runs(s: str) -> int` を書いてください。例: \"banana\" は a・a・a の 3 つ、\"queue\" は \"ueue\" が 1 つなので 1、\"rhythm\" は 0。空文字列は 0。\n\n関数のシグネチャ: `def count_vowel_runs(s: str) -> int`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "code-003",
+"prompt": "会議室の予約が [開始, 終了] の分単位の組（開始 < 終了）の並びで与えられます。重なる予約、またはちょうど接する予約（ある終了 = 別の開始）をまとめ、開始の昇順に並べた [開始, 終了] の並びを返す関数 `merge_slots(slots: list[list[int]]) -> list[list[int]]` を書いてください。入力は並んでいるとは限りません。空の入力には空の並びを返します。例: [[60, 90], [0, 30], [30, 45]] は [[0, 45], [60, 90]]。\n\n関数のシグネチャ: `def merge_slots(slots: list[list[int]]) -> list[list[int]]`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "code-004",
+"prompt": "投票の並び（候補者名の文字列）を受け取り、得票の多い順に候補者名を並べて返す関数 `tally_votes(votes: list[str]) -> list[str]` を書いてください。得票が同じ候補者どうしは、その候補者が最初に票を得た位置が早いほうを先にします。例: [\"miso\", \"shio\", \"shoyu\", \"shio\", \"miso\"] は [\"miso\", \"shio\", \"shoyu\"]。\n\n関数のシグネチャ: `def tally_votes(votes: list[str]) -> list[str]`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "code-005",
+"prompt": "0 段目から n 段目まで階段を上ります。1 回に 1 段か 2 段上がれますが、broken に含まれる段（1 以上 n 未満の番号）には足を置けません。0 段目から n 段目へちょうど到達する上がり方の数を 1000000007 で割った余りを返す関数 `stair_ways(n: int, broken: list[int]) -> int` を書いてください（n は 1 以上 100000 以下）。例: stair_ways(4, [2]) は 1（0→1→3→4 だけ）。\n\n関数のシグネチャ: `def stair_ways(n: int, broken: list[int]) -> int`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "code-006",
+"prompt": "「回数＋文字」を並べた圧縮文字列を元に戻す関数 `rle_decode(s: str) -> str` を書いてください。回数は 1 桁以上の 10 進数で、回数が無い文字は 1 回とみなします。文字は英字だけです。例: \"3ab2c\" は \"aaabcc\"、\"12x\" は \"xxxxxxxxxxxx\"。空文字列は空文字列。\n\n関数のシグネチャ: `def rle_decode(s: str) -> str`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "code-007",
+"prompt": "'#'（陸）と '.'（海）からなる長方形の地図が文字列の並びで与えられます。上下左右でつながった陸を 1 つの島とし、各島の面積（マス数）を大きい順に並べた並びを返す関数 `grid_islands(grid: list[str]) -> list[int]` を書いてください。斜めはつながりとみなしません。陸が無ければ空の並び。例: [\"##.\", \".#.\", \"..#\"] は [3, 1]。\n\n関数のシグネチャ: `def grid_islands(grid: list[str]) -> list[int]`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "code-008",
+"prompt": "バスの発車時刻が \"HH:MM\"（24 時間制）の文字列の並びで与えられます（並んでいるとは限りません）。現在時刻 now（同じ形式）以降で最も早い発車時刻を返す関数 `next_bus(times: list[str], now: str) -> str` を書いてください。now と同じ時刻の便も乗れるものとします。その日の便が残っていなければ、翌日の最初の便の時刻を返します。例: next_bus([\"07:10\", \"06:55\", \"08:30\"], \"07:00\") は \"07:10\"。\n\n関数のシグネチャ: `def next_bus(times: list[str], now: str) -> str`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "code-009",
+"prompt": "文字列 s に含まれる括弧 ()、[]、{} が正しく対応しているなら、入れ子の最大の深さを返し、対応していなければ -1 を返す関数 `bracket_depth(s: str) -> int` を書いてください。括弧以外の文字は無視します。括弧が無ければ 0。例: \"a(b[c]{d})\" は 2、\"(]\" は -1。\n\n関数のシグネチャ: `def bracket_depth(s: str) -> int`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "code-010",
+"prompt": "割り勘の金額 total（0 以上の整数の円）を、各人の重み weights（1 以上の整数の並び）に比例して分けます。各人の取り分は整数の円で、合計がちょうど total になるようにします。まず各人に total × 重み ÷ 重みの合計 の切り捨てを割り当て、余った円は、切り捨てた端数の大きい人から 1 円ずつ配ります（端数が同じなら並びの前の人を先にします）。各人の取り分を元の順で返す関数 `split_bill(total: int, weights: list[int]) -> list[int]` を書いてください。例: split_bill(1000, [1, 1, 1]) は [334, 333, 333]。\n\n関数のシグネチャ: `def split_bill(total: int, weights: list[int]) -> list[int]`\n\nPython 3 で書き、答えは ```python で始まるコードブロック 1 つだけにしてください（説明の文は書かないでください）。標準ライブラリ以外は使わず、入出力（input・print）も使わないでください。"
+},
+{
+"id": "instruction-001",
+"prompt": "「夏」をテーマにした文を、ちょうど 3 行で書いてください。各行は「・」で始め、ほかの文字や行は書かないでください。"
+},
+{
+"id": "instruction-002",
+"prompt": "架空の人物を 1 人考え、その名前と年齢を、キーが name と age の JSON オブジェクト 1 つだけで出力してください。age は数値にしてください。説明やコードブロックの記号は付けないでください。"
+},
+{
+"id": "instruction-003",
+"prompt": "1 気圧のもとで、純粋な水はおよそ 100℃ で沸騰しますか。「はい」か「いいえ」の一語だけで答えてください。"
+},
+{
+"id": "instruction-004",
+"prompt": "桜について、20 文字以内の 1 文で説明してください。それ以外は何も書かないでください。"
+},
+{
+"id": "instruction-005",
+"prompt": "ひらがなの「の」を一度も使わずに、秋について 1 文で書いてください。"
+},
+{
+"id": "instruction-006",
+"prompt": "「おはよう」を英語に訳し、すべて大文字で、訳語だけを書いてください。"
+},
+{
+"id": "instruction-007",
+"prompt": "りんご、いちご、みかんの 3 つを五十音順に並べ、読点「、」で区切って 1 行で書いてください。それ以外は何も書かないでください。"
+},
+{
+"id": "instruction-008",
+"prompt": "2026 を漢数字で書いてください。漢数字だけを書いてください。"
+},
+{
+"id": "instruction-009",
+"prompt": "今日の天気について自由に 2 文で書き、最後を必ず「以上。」で終えてください。"
+},
+{
+"id": "instruction-010",
+"prompt": "Python で 1 + 1 の結果を表示する 1 行のコードを、Markdown のコードブロック（```python で始まり ``` で終わる）だけで書いてください。説明は書かないでください。"
+},
+{
+"id": "japanese-001",
+"prompt": "「部長が明日の会議でそう言った」の「言った」を、部長への尊敬語に直した文を 1 つだけ書いてください。"
+},
+{
+"id": "japanese-002",
+"prompt": "取引先に送るメールの一文として、「明日、あなたの会社に行きます」を適切な敬語に直してください。直した文だけを書いてください。"
+},
+{
+"id": "japanese-003",
+"prompt": "「黒い目のきれいな女の子」という句は、いくつかの意味に読めます。考えられる読み方を、それぞれ言い換えて挙げてください。"
+},
+{
+"id": "japanese-004",
+"prompt": "「猫の手も借りたい」とは、どのような状態を表す言い方ですか。1 文で説明してください。"
+},
+{
+"id": "japanese-005",
+"prompt": "「汚名挽回」は誤用だと言われることがあります。そう言われる理由と、本来の言い方を簡潔に説明してください。"
+},
+{
+"id": "japanese-006",
+"prompt": "「象は鼻が長い」という文で、「象は」と「鼻が」はそれぞれどんな役割を持っていますか。簡潔に説明してください。"
+},
+{
+"id": "japanese-007",
+"prompt": "「重複」という語の読み方を 2 通り、ひらがなで書いてください。"
+},
+{
+"id": "japanese-008",
+"prompt": "次の文章を 30 文字以内で要約してください。要約だけを書いてください。\n\n町の図書館は、来月から開館時間を 1 時間延ばして夜 8 時までにする。仕事帰りの人が利用しにくいという声が多く寄せられていたためだ。そのかわり、毎週月曜日だった休館日を、利用者の少ない火曜日に移す。"
+},
+{
+"id": "japanese-009",
+"prompt": "次の 2 つの場面で、「結構です」はそれぞれ「断り」と「承諾」のどちらの意味ですか。場面 1: 店員に「袋はご入り用ですか」と聞かれて「結構です」と答えた。場面 2: 上司に「この案で進めてよいですか」と聞かれて「結構です」と答えた。"
+},
+{
+"id": "japanese-010",
+"prompt": "次の文章を、意味を変えずに「だ・である」調に直してください。直した文章だけを書いてください。\n\n今朝は少し寒かったです。駅まで歩く途中で、川沿いの桜がもう咲き始めているのに気づきました。春はすぐそこまで来ているようです。"
+},
+{
+"id": "knowledge-000",
+"prompt": "あなたの学習データは、おおよそ西暦何年何月ごろまでの情報を含んでいますか。分からなければ、分からないと答えてください。"
+},
+{
+"id": "knowledge-001",
+"prompt": "OpenAI が 2024 年 2 月に発表した、文章から動画を生成する AI モデルの名前を答えてください。名前だけを答えてください。"
+},
+{
+"id": "knowledge-002",
+"prompt": "2024 年のノーベル物理学賞を受賞した 2 人のうち、トロント大学に所属する研究者の名前を答えてください。名前だけを答えてください。"
+},
+{
+"id": "knowledge-003",
+"prompt": "任天堂が 2025 年 1 月に正式に名称を発表した、Nintendo Switch の後継機の名前を答えてください。名前だけを答えてください。"
+},
+{
+"id": "knowledge-004",
+"prompt": "2025 年のノーベル生理学・医学賞を受賞した、大阪大学の研究者の名前を答えてください。名前だけを答えてください。"
+},
+{
+"id": "knowledge-005",
+"prompt": "2026 年に開かれた第 6 回ワールド・ベースボール・クラシック（WBC）で優勝した国を答えてください。国名だけを答えてください。"
+},
+{
+"id": "knowledge-006",
+"prompt": "2026 年の第 93 回東京優駿（日本ダービー）で優勝した馬の名前を答えてください。馬名だけを答えてください。"
+},
+{
+"id": "knowledge-007",
+"prompt": "2026 年に開かれた FIFA ワールドカップで優勝した国を答えてください。国名だけを答えてください。"
+},
+{
+"id": "knowledge-008",
+"prompt": "日本で最も面積の大きい湖の名前を答えてください。名前だけを答えてください。"
+},
+{
+"id": "knowledge-009",
+"prompt": "鎌倉幕府を開いた人物の名前を答えてください。名前だけを答えてください。"
+},
+{
+"id": "knowledge-010",
+"prompt": "東海道新幹線が開業したのは西暦何年ですか。数だけを答えてください。"
+},
+{
+"id": "logic-001",
+"prompt": "A は B より背が高く、C は A より背が高く、D は B より背が低いです。4 人のうち最も背が低いのは誰ですか。記号だけを答えてください。"
+},
+{
+"id": "logic-002",
+"prompt": "ある島には、いつも本当のことを言う正直者と、いつも嘘を言う嘘つきしかいません。島の住人 A と B のうち、A が「私たちは 2 人とも嘘つきだ」と言いました。A と B はそれぞれ正直者と嘘つきのどちらですか。"
+},
+{
+"id": "logic-003",
+"prompt": "今日は水曜日です。100 日後は何曜日ですか。曜日だけを答えてください。"
+},
+{
+"id": "logic-004",
+"prompt": "アナログ時計が 3 時 15 分を指しているとき、長針と短針のなす角のうち小さいほうは何度ですか。数だけを答えてください。"
+},
+{
+"id": "logic-005",
+"prompt": "箱 A・B・C のどれか 1 つにだけ宝が入っています。それぞれの箱に次の札が付いています。A「宝はこの箱にない」、B「宝は A にある」、C「宝はこの箱にない」。3 枚の札のうち、本当のことが書かれているのはちょうど 1 枚です。宝はどの箱にありますか。記号だけを答えてください。"
+},
+{
+"id": "logic-006",
+"prompt": "次の数列の空欄に入る数を答えてください。2, 6, 12, 20, 30, □。数だけを答えてください。"
+},
+{
+"id": "logic-007",
+"prompt": "「すべての猫は動物である」「ある動物は黒い」の 2 つが正しいとき、「ある猫は黒い」は必ず正しいと言えますか。「はい」か「いいえ」で答えてください。"
+},
+{
+"id": "logic-008",
+"prompt": "父の年齢は子の年齢のちょうど 3 倍です。12 年後には、父の年齢は子の年齢のちょうど 2 倍になります。今の父の年齢は何歳ですか。数だけを答えてください。"
+},
+{
+"id": "logic-009",
+"prompt": "「雨が降れば、試合は中止になる」という決まりは常に守られます。ある日、試合は中止されずに行われました。その日、雨は降りましたか。「降った」「降らなかった」「分からない」のどれかで答えてください。"
+},
+{
+"id": "logic-010",
+"prompt": "4 つのチームが総当たり戦をします。どの 2 チームもちょうど 1 回ずつ対戦するとき、試合は全部で何試合ですか。数だけを答えてください。"
+},
+{
+"id": "math-001",
+"prompt": "りんごが 3 箱あり、1 箱に 14 個ずつ入っています。そこから 5 個食べました。残りは何個ですか。数だけを答えてください。"
+},
+{
+"id": "math-002",
+"prompt": "時速 48 km で走る自転車は、2 時間 15 分で何 km 進みますか。数だけを答えてください。"
+},
+{
+"id": "math-003",
+"prompt": "1 から 20 までの整数のうち、3 でも 4 でも割り切れないものはいくつありますか。数だけを答えてください。"
+},
+{
+"id": "math-004",
+"prompt": "1 から 100 までの整数のうち、7 の倍数であり、かつ偶数であるものは何個ありますか。数だけを答えてください。"
+},
+{
+"id": "math-005",
+"prompt": "定価 2,400 円の品物が 2 割引きになっています。さらに消費税 10% がかかるとき、支払う金額は何円ですか。数だけを答えてください。"
+},
+{
+"id": "math-006",
+"prompt": "2 の 20 乗を 1000 で割った余りはいくつですか。数だけを答えてください。"
+},
+{
+"id": "math-007",
+"prompt": "初項が 5、公差が 3 の等差数列について、第 1 項から第 20 項までの和を求めてください。数だけを答えてください。"
+},
+{
+"id": "math-008",
+"prompt": "2 個のさいころを同時に振るとき、出た目の和が 8 になる確率を既約分数で答えてください。分数だけを答えてください。"
+},
+{
+"id": "math-009",
+"prompt": "連立方程式 2x + 3y = 13、x − y = −1 を満たす x と y について、x + y の値を求めてください。数だけを答えてください。"
+},
+{
+"id": "math-010",
+"prompt": "5 人の中から 3 人を選び、1 列に並べる並べ方は何通りありますか。数だけを答えてください。"
+}
+]
+codex
+[{"id":"code-001","answer":"```python\ndef shelf_label(n: int) -> str:\n    return f\"S-{n:04d}\"\n```"},{"id":"code-002","answer":"```python\ndef count_vowel_runs(s: str) -> int:\n    vowels = set(\"aeiou\")\n    count = 0\n    in_run = False\n    for char in s:\n        if char in vowels:\n            if not in_run:\n                count += 1\n                in_run = True\n        else:\n            in_run = False\n    return count\n```"},{"id":"code-003","answer":"```python\ndef merge_slots(slots: list[list[int]]) -> list[list[int]]:\n    if not slots:\n        return []\n    sorted_slots = sorted(slots)\n    merged = [sorted_slots[0][:]]\n    for start, end in sorted_slots[1:]:\n        if start <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], end)\n        else:\n            merged.append([start, end])\n    return merged\n```"},{"id":"code-004","answer":"```python\ndef tally_votes(votes: list[str]) -> list[str]:\n    counts = {}\n    first_seen = {}\n    for index, candidate in enumerate(votes):\n        counts[candidate] = counts.get(candidate, 0) + 1\n        first_seen.setdefault(candidate, index)\n    return sorted(counts, key=lambda candidate: (-counts[candidate], first_seen[candidate]))\n```"},{"id":"code-005","answer":"```python\ndef stair_ways(n: int, broken: list[int]) -> int:\n    mod = 1_000_000_007\n    broken_set = set(broken)\n    ways = [0] * (n + 1)\n    ways[0] = 1\n    for step in range(1, n + 1):\n        if step not in broken_set:\n            ways[step] = (ways[step - 1] + (ways[step - 2] if step >= 2 else 0)) % mod\n    return ways[n]\n```"},{"id":"code-006","answer":"```python\ndef rle_decode(s: str) -> str:\n    result = []\n    count = \"\"\n    for char in s:\n        if char.isdigit():\n            count += char\n        else:\n            result.append(char * (int(count) if count else 1))\n            count = \"\"\n    return \"\".join(result)\n```"},{"id":"code-007","answer":"```python\ndef grid_islands(grid: list[str]) -> list[int]:\n    if not grid:\n        return []\n    rows, cols = len(grid), len(grid[0])\n    visited = set()\n    areas = []\n    for r in range(rows):\n        for c in range(cols):\n            if grid[r][c] != \"#\" or (r, c) in visited:\n                continue\n            stack = [(r, c)]\n            visited.add((r, c))\n            area = 0\n            while stack:\n                cr, cc = stack.pop()\n                area += 1\n                for nr, nc in ((cr - 1, cc), (cr + 1, cc), (cr, cc - 1), (cr, cc + 1)):\n                    if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == \"#\" and (nr, nc) not in visited:\n                        visited.add((nr, nc))\n                        stack.append((nr, nc))\n            areas.append(area)\n    return sorted(areas, reverse=True)\n```"},{"id":"code-008","answer":"```python\ndef next_bus(times: list[str], now: str) -> str:\n    return min(times, key=lambda time: (time < now, time))\n```"},{"id":"code-009","answer":"```python\ndef bracket_depth(s: str) -> int:\n    opening = \"([{\"\n    closing = \")]}\"\n    pairs = dict(zip(closing, opening))\n    stack = []\n    max_depth = 0\n    for char in s:\n        if char in opening:\n            stack.append(char)\n            max_depth = max(max_depth, len(stack))\n        elif char in closing:\n            if not stack or stack.pop() != pairs[char]:\n                return -1\n    return max_depth if not stack else -1\n```"},{"id":"code-010","answer":"```python\ndef split_bill(total: int, weights: list[int]) -> list[int]:\n    weight_sum = sum(weights)\n    shares = [(total * weight) // weight_sum for weight in weights]\n    remainders = [(total * weight) % weight_sum for weight in weights]\n    leftover = total - sum(shares)\n    for index in sorted(range(len(weights)), key=lambda i: (-remainders[i], i))[:leftover]:\n        shares[index] += 1\n    return shares\n```"},{"id":"instruction-001","answer":"・蝉の声が青空に響く。\n・夕立のあと、風が涼しい。\n・海辺に夏の陽が沈む。"},{"id":"instruction-002","answer":"{\"name\":\"森川あおい\",\"age\":34}"},{"id":"instruction-003","answer":"はい"},{"id":"instruction-004","answer":"桜は春に美しい花を咲かせます。"},{"id":"instruction-005","answer":"秋は木々が色づき、空気が澄む季節だ。"},{"id":"instruction-006","answer":"GOOD MORNING"},{"id":"instruction-007","answer":"いちご、みかん、りんご"},{"id":"instruction-008","answer":"二千二十六"},{"id":"instruction-009","answer":"今日は穏やかに晴れています。過ごしやすい陽気です。以上。"},{"id":"instruction-010","answer":"```python\nprint(1 + 1)\n```"},{"id":"japanese-001","answer":"部長が明日の会議でそうおっしゃった。"},{"id":"japanese-002","answer":"明日、御社に伺います。"},{"id":"japanese-003","answer":"黒い目をした、きれいな女の子。\n目がきれいな、黒い女の子。"},{"id":"japanese-004","answer":"非常に忙しく、誰の手でも借りたいほど余裕がない状態を表す。"},{"id":"japanese-005","answer":"「挽回」は失ったものを取り戻す意味なので、「汚名挽回」では汚名を取り戻すことになり、誤用とされる。「汚名返上」または「名誉挽回」が本来の言い方である。"},{"id":"japanese-006","answer":"「象は」は話題を示し、「鼻が」は述語「長い」の主語を示す。"},{"id":"japanese-007","answer":"ちょうふく、じゅうふく"},{"id":"japanese-008","answer":"図書館は夜8時まで開館し、休館日を火曜に移す。"},{"id":"japanese-009","answer":"場面1は断り、場面2は承諾。"},{"id":"japanese-010","answer":"今朝は少し寒かった。駅まで歩く途中で、川沿いの桜がもう咲き始めているのに気づいた。春はすぐそこまで来ているようである。"},{"id":"knowledge-000","answer":"分からない"},{"id":"knowledge-001","answer":"Sora"},{"id":"knowledge-002","answer":"ジェフリー・ヒントン"},{"id":"knowledge-003","answer":"Nintendo Switch 2"},{"id":"knowledge-004","answer":"分からない"},{"id":"knowledge-005","answer":"分からない"},{"id":"knowledge-006","answer":"分からない"},{"id":"knowledge-007","answer":"分からない"},{"id":"knowledge-008","answer":"琵琶湖"},{"id":"knowledge-009","answer":"源頼朝"},{"id":"knowledge-010","answer":"1964"},{"id":"logic-001","answer":"D"},{"id":"logic-002","answer":"Aは嘘つき、Bは正直者。"},{"id":"logic-003","answer":"木曜日"},{"id":"logic-004","answer":"7.5"},{"id":"logic-005","answer":"C"},{"id":"logic-006","answer":"42"},{"id":"logic-007","answer":"いいえ"},{"id":"logic-008","answer":"72"},{"id":"logic-009","answer":"降らなかった"},{"id":"logic-010","answer":"6"},{"id":"math-001","answer":"37"},{"id":"math-002","answer":"108"},{"id":"math-003","answer":"10"},{"id":"math-004","answer":"7"},{"id":"math-005","answer":"2112"},{"id":"math-006","answer":"576"},{"id":"math-007","answer":"670"},{"id":"math-008","answer":"5/36"},{"id":"math-009","answer":"4"},{"id":"math-010","answer":"60"}]
+hook: Stop
+hook: Stop
+hook: Stop Completed
+hook: Stop Completed
+tokens used
+30,051
+[{"id":"code-001","answer":"```python\ndef shelf_label(n: int) -> str:\n    return f\"S-{n:04d}\"\n```"},{"id":"code-002","answer":"```python\ndef count_vowel_runs(s: str) -> int:\n    vowels = set(\"aeiou\")\n    count = 0\n    in_run = False\n    for char in s:\n        if char in vowels:\n            if not in_run:\n                count += 1\n                in_run = True\n        else:\n            in_run = False\n    return count\n```"},{"id":"code-003","answer":"```python\ndef merge_slots(slots: list[list[int]]) -> list[list[int]]:\n    if not slots:\n        return []\n    sorted_slots = sorted(slots)\n    merged = [sorted_slots[0][:]]\n    for start, end in sorted_slots[1:]:\n        if start <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], end)\n        else:\n            merged.append([start, end])\n    return merged\n```"},{"id":"code-004","answer":"```python\ndef tally_votes(votes: list[str]) -> list[str]:\n    counts = {}\n    first_seen = {}\n    for index, candidate in enumerate(votes):\n        counts[candidate] = counts.get(candidate, 0) + 1\n        first_seen.setdefault(candidate, index)\n    return sorted(counts, key=lambda candidate: (-counts[candidate], first_seen[candidate]))\n```"},{"id":"code-005","answer":"```python\ndef stair_ways(n: int, broken: list[int]) -> int:\n    mod = 1_000_000_007\n    broken_set = set(broken)\n    ways = [0] * (n + 1)\n    ways[0] = 1\n    for step in range(1, n + 1):\n        if step not in broken_set:\n            ways[step] = (ways[step - 1] + (ways[step - 2] if step >= 2 else 0)) % mod\n    return ways[n]\n```"},{"id":"code-006","answer":"```python\ndef rle_decode(s: str) -> str:\n    result = []\n    count = \"\"\n    for char in s:\n        if char.isdigit():\n            count += char\n        else:\n            result.append(char * (int(count) if count else 1))\n            count = \"\"\n    return \"\".join(result)\n```"},{"id":"code-007","answer":"```python\ndef grid_islands(grid: list[str]) -> list[int]:\n    if not grid:\n        return []\n    rows, cols = len(grid), len(grid[0])\n    visited = set()\n    areas = []\n    for r in range(rows):\n        for c in range(cols):\n            if grid[r][c] != \"#\" or (r, c) in visited:\n                continue\n            stack = [(r, c)]\n            visited.add((r, c))\n            area = 0\n            while stack:\n                cr, cc = stack.pop()\n                area += 1\n                for nr, nc in ((cr - 1, cc), (cr + 1, cc), (cr, cc - 1), (cr, cc + 1)):\n                    if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == \"#\" and (nr, nc) not in visited:\n                        visited.add((nr, nc))\n                        stack.append((nr, nc))\n            areas.append(area)\n    return sorted(areas, reverse=True)\n```"},{"id":"code-008","answer":"```python\ndef next_bus(times: list[str], now: str) -> str:\n    return min(times, key=lambda time: (time < now, time))\n```"},{"id":"code-009","answer":"```python\ndef bracket_depth(s: str) -> int:\n    opening = \"([{\"\n    closing = \")]}\"\n    pairs = dict(zip(closing, opening))\n    stack = []\n    max_depth = 0\n    for char in s:\n        if char in opening:\n            stack.append(char)\n            max_depth = max(max_depth, len(stack))\n        elif char in closing:\n            if not stack or stack.pop() != pairs[char]:\n                return -1\n    return max_depth if not stack else -1\n```"},{"id":"code-010","answer":"```python\ndef split_bill(total: int, weights: list[int]) -> list[int]:\n    weight_sum = sum(weights)\n    shares = [(total * weight) // weight_sum for weight in weights]\n    remainders = [(total * weight) % weight_sum for weight in weights]\n    leftover = total - sum(shares)\n    for index in sorted(range(len(weights)), key=lambda i: (-remainders[i], i))[:leftover]:\n        shares[index] += 1\n    return shares\n```"},{"id":"instruction-001","answer":"・蝉の声が青空に響く。\n・夕立のあと、風が涼しい。\n・海辺に夏の陽が沈む。"},{"id":"instruction-002","answer":"{\"name\":\"森川あおい\",\"age\":34}"},{"id":"instruction-003","answer":"はい"},{"id":"instruction-004","answer":"桜は春に美しい花を咲かせます。"},{"id":"instruction-005","answer":"秋は木々が色づき、空気が澄む季節だ。"},{"id":"instruction-006","answer":"GOOD MORNING"},{"id":"instruction-007","answer":"いちご、みかん、りんご"},{"id":"instruction-008","answer":"二千二十六"},{"id":"instruction-009","answer":"今日は穏やかに晴れています。過ごしやすい陽気です。以上。"},{"id":"instruction-010","answer":"```python\nprint(1 + 1)\n```"},{"id":"japanese-001","answer":"部長が明日の会議でそうおっしゃった。"},{"id":"japanese-002","answer":"明日、御社に伺います。"},{"id":"japanese-003","answer":"黒い目をした、きれいな女の子。\n目がきれいな、黒い女の子。"},{"id":"japanese-004","answer":"非常に忙しく、誰の手でも借りたいほど余裕がない状態を表す。"},{"id":"japanese-005","answer":"「挽回」は失ったものを取り戻す意味なので、「汚名挽回」では汚名を取り戻すことになり、誤用とされる。「汚名返上」または「名誉挽回」が本来の言い方である。"},{"id":"japanese-006","answer":"「象は」は話題を示し、「鼻が」は述語「長い」の主語を示す。"},{"id":"japanese-007","answer":"ちょうふく、じゅうふく"},{"id":"japanese-008","answer":"図書館は夜8時まで開館し、休館日を火曜に移す。"},{"id":"japanese-009","answer":"場面1は断り、場面2は承諾。"},{"id":"japanese-010","answer":"今朝は少し寒かった。駅まで歩く途中で、川沿いの桜がもう咲き始めているのに気づいた。春はすぐそこまで来ているようである。"},{"id":"knowledge-000","answer":"分からない"},{"id":"knowledge-001","answer":"Sora"},{"id":"knowledge-002","answer":"ジェフリー・ヒントン"},{"id":"knowledge-003","answer":"Nintendo Switch 2"},{"id":"knowledge-004","answer":"分からない"},{"id":"knowledge-005","answer":"分からない"},{"id":"knowledge-006","answer":"分からない"},{"id":"knowledge-007","answer":"分からない"},{"id":"knowledge-008","answer":"琵琶湖"},{"id":"knowledge-009","answer":"源頼朝"},{"id":"knowledge-010","answer":"1964"},{"id":"logic-001","answer":"D"},{"id":"logic-002","answer":"Aは嘘つき、Bは正直者。"},{"id":"logic-003","answer":"木曜日"},{"id":"logic-004","answer":"7.5"},{"id":"logic-005","answer":"C"},{"id":"logic-006","answer":"42"},{"id":"logic-007","answer":"いいえ"},{"id":"logic-008","answer":"72"},{"id":"logic-009","answer":"降らなかった"},{"id":"logic-010","answer":"6"},{"id":"math-001","answer":"37"},{"id":"math-002","answer":"108"},{"id":"math-003","answer":"10"},{"id":"math-004","answer":"7"},{"id":"math-005","answer":"2112"},{"id":"math-006","answer":"576"},{"id":"math-007","answer":"670"},{"id":"math-008","answer":"5/36"},{"id":"math-009","answer":"4"},{"id":"math-010","answer":"60"}]
+rc=0

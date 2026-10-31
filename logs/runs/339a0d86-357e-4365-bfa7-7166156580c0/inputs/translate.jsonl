@@ -1,0 +1,10 @@
+{"id": "tr-01", "aim": "日→英: 主語の省略を補えるか", "text": "昨日買った本、もう読み終わっちゃった。", "source_lang": "ja", "target_lang": "en"}
+{"id": "tr-02", "aim": "日→英: 敬語の丁寧さを訳に反映できるか", "text": "お忙しいところ恐縮ですが、資料をご確認いただけますでしょうか。", "source_lang": "ja", "target_lang": "en"}
+{"id": "tr-03", "aim": "日→英: 慣用句を意味で訳せるか", "text": "この案件は猫の手も借りたいほど忙しい。", "source_lang": "ja", "target_lang": "en"}
+{"id": "tr-04", "aim": "日→英: 曖昧な「結構です」を文脈で訳せるか", "text": "袋はご入り用ですか。――いえ、結構です。", "source_lang": "ja", "target_lang": "en"}
+{"id": "tr-05", "aim": "日→英: 数と単位を正しく扱えるか", "text": "会場まで駅から徒歩約15分、収容人数は1,200人です。", "source_lang": "ja", "target_lang": "en"}
+{"id": "tr-06", "aim": "英→日: 句動詞を自然に訳せるか", "text": "Let's call it a day and pick this up tomorrow morning.", "source_lang": "en", "target_lang": "ja"}
+{"id": "tr-07", "aim": "英→日: 丁寧な依頼を敬語で訳せるか", "text": "Would you mind sending me the updated schedule by Friday?", "source_lang": "en", "target_lang": "ja"}
+{"id": "tr-08", "aim": "英→日: 皮肉を読み取れるか", "text": "Oh great, another meeting that could have been an email.", "source_lang": "en", "target_lang": "ja"}
+{"id": "tr-09", "aim": "英→日: 専門用語を適切に訳せるか", "text": "The function returns None if the input list is empty.", "source_lang": "en", "target_lang": "ja"}
+{"id": "tr-10", "aim": "英→日: 長めの文の語順を自然に組み替えられるか", "text": "Although the weather forecast predicted rain, the festival went ahead as planned and drew a larger crowd than last year.", "source_lang": "en", "target_lang": "ja"}

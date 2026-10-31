@@ -20,6 +20,8 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
+from sarashina_eval.run_log import repo_relative
+
 #: 写しの置き場（``log_dir`` の下）。
 RUNS_DIR = "runs"
 #: 写しの目録のファイル名。
@@ -129,7 +131,7 @@ def save_snapshot(
                 name = f"{parent.name}_{n}"
             folder_of[parent] = name
         rel = f"{folder_of[parent]}/{src.name}"
-        files.append({"path": rel, "source": str(src.resolve()), "kind": kind})
+        files.append({"path": rel, "source": repo_relative(src), "kind": kind})
         contents[rel] = "\n".join(lines) + "\n"
     manifest = {"run_id": run_id, "files": files}
     out = snapshot_dir(log_dir, run_id)

@@ -1,0 +1,3 @@
+{"id": "math-001", "category": "math", "prompt": "りんごが 3 箱あり、1 箱に 14 個ずつ入っています。そこから 5 個食べました。残りは何個ですか。数だけを答えてください。", "expected": "37", "grading": {"method": "numeric", "tolerance": 0}, "intent": "掛け算と引き算の 2 段の文章題を、答えの形式の指示に従って解けるか"}
+{"id": "math-002", "category": "math", "prompt": "時速 48 km で走る自転車は、2 時間 15 分で何 km 進みますか。数だけを答えてください。", "expected": "108", "grading": {"method": "numeric", "tolerance": 0}, "intent": "時間の単位の換算を含む速さの計算"}
+{"id": "math-003", "category": "math", "prompt": "1 から 20 までの整数のうち、3 でも 4 でも割り切れないものはいくつありますか。数だけを答えてください。", "expected": "10", "grading": {"method": "numeric", "tolerance": 0}, "intent": "包除原理を使う数え上げ"}

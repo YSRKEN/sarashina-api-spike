@@ -1,0 +1,26 @@
+{
+ "run_id": "c04818ea-9b34-47b9-8ca7-0f9255a6fe39",
+ "files": [
+  {
+   "path": "inputs/guard.jsonl",
+   "source": "後から補った（送信時の inputs/guard.jsonl。tests/fixtures/inputs/ と同じ）",
+   "kind": "inputs"
+  },
+  {
+   "path": "inputs/embedding.jsonl",
+   "source": "後から補った（送信時の inputs/embedding.jsonl。tests/fixtures/inputs/ と同じ）",
+   "kind": "inputs"
+  },
+  {
+   "path": "inputs/rerank.jsonl",
+   "source": "後から補った（送信時の inputs/rerank.jsonl。tests/fixtures/inputs/ と同じ）",
+   "kind": "inputs"
+  },
+  {
+   "path": "inputs/translate.jsonl",
+   "source": "後から補った（送信時の inputs/translate.jsonl。tests/fixtures/inputs/ と同じ）",
+   "kind": "inputs"
+  }
+ ],
+ "backfilled": true
+}

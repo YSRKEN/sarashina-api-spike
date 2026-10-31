@@ -1,9 +1,6 @@
 # 秘密情報（コミットしない）
 .env
 
-# API の実行ログ（公開しない）
-logs/
-
 __pycache__/
 *.pyc
 .venv/

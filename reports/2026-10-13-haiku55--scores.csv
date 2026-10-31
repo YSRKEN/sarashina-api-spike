@@ -1,7 +1,0 @@
-category,claude-haiku-5-5-low:accuracy,claude-haiku-5-5-low:answers,claude-haiku-5-5-low:all_correct,claude-haiku-5-5-low:partial,claude-haiku-5-5-low:none_correct,claude-haiku-5-5-low:ungraded
-code,1.000,10,10,0,0,0
-instruction,1.000,10,10,0,0,0
-japanese,,0,0,0,0,10
-knowledge,,0,0,0,0,11
-logic,1.000,10,10,0,0,0
-math,1.000,10,10,0,0,0

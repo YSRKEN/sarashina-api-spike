@@ -1,9 +1,0 @@
-kind,case_id,model,status,metrics
-guard,guard-tmp-01,sarashina3-guard,correct,verdict=安全;expected_verdict=安全;categories=;expected_categories=;verdict_ok=True
-guard,guard-tmp-02,sarashina3-guard,correct,verdict=安全;expected_verdict=安全;categories=;expected_categories=;verdict_ok=True
-embedding,emb-tmp-01,sarashina3-embedding,correct,min_near=0.9652;max_far=0.723184;margin=0.242016
-embedding,emb-tmp-02,sarashina3-embedding,correct,min_near=0.838861;max_far=0.64636;margin=0.1925
-rerank,rerank-tmp-01,sarashina3-rerank,correct,top=1;expected_top=1;order=1 0 2
-rerank,rerank-tmp-02,sarashina3-rerank,correct,top=0;expected_top=0;order=0 1 2;order_match=True
-translate,tr-tmp-01,sarashina3-translate,ungraded,
-translate,tr-tmp-02,sarashina3-translate,ungraded,

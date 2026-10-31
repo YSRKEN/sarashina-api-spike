@@ -1,0 +1,17 @@
+run_id,run_date,model,scenario_id,condition,status,passed,rounds,truncated,n_calls,called_expected,args_json_ok,args_match,unexpected_calls,facts_found,facts_total
+450389c8,2026-10-13,sarashina3-mini,tool-error-city,required-first,ok,1,2,0,1,1,1,1,0,1,1
+450389c8,2026-10-13,sarashina3-mini,tool-error-url,required-first,ok,1,2,0,1,1,1,1,0,1,1
+450389c8,2026-10-13,sarashina3-mini,tool-fetch-extract,required-first,ok,1,2,0,1,1,1,1,0,3,3
+450389c8,2026-10-13,sarashina3-mini,tool-fetch-summary,required-first,ok,1,2,0,1,1,1,1,0,2,2
+450389c8,2026-10-13,sarashina3-mini,tool-not-needed,required-first,ok,0,2,0,1,0,1,0,1,1,1
+450389c8,2026-10-13,sarashina3-mini,tool-weather-and-fetch,required-first,http_None,0,1,0,0,0,1,0,0,0,4
+450389c8,2026-10-13,sarashina3-mini,tool-weather-calc,required-first,ok,1,3,0,2,1,1,1,0,1,1
+450389c8,2026-10-13,sarashina3-mini,tool-weather-single,required-first,ok,1,2,0,1,1,1,1,0,2,2
+450389c8,2026-10-13,sarashina3-nano,tool-error-city,required-first,ok,1,2,0,1,1,1,1,0,1,1
+450389c8,2026-10-13,sarashina3-nano,tool-error-url,required-first,ok,1,2,0,1,1,1,1,0,1,1
+450389c8,2026-10-13,sarashina3-nano,tool-fetch-extract,required-first,ok,1,2,0,1,1,1,1,0,3,3
+450389c8,2026-10-13,sarashina3-nano,tool-fetch-summary,required-first,ok,1,2,0,1,1,1,1,0,2,2
+450389c8,2026-10-13,sarashina3-nano,tool-not-needed,required-first,ok,0,2,0,1,0,1,0,1,1,1
+450389c8,2026-10-13,sarashina3-nano,tool-weather-and-fetch,required-first,ok,1,3,0,2,1,1,1,0,4,4
+450389c8,2026-10-13,sarashina3-nano,tool-weather-calc,required-first,ok,1,3,0,2,1,1,1,0,1,1
+450389c8,2026-10-13,sarashina3-nano,tool-weather-single,required-first,ok,1,2,0,1,1,1,1,0,2,2

@@ -1,0 +1,13 @@
+run_id,run_date,model,category,accuracy,answers,all_correct,partial,none_correct,ungraded
+31fb3e0c,2026-10-13,sarashina3-mini,code,0.933,30,9,1,0,0
+31fb3e0c,2026-10-13,sarashina3-mini,instruction,0.800,30,7,2,1,0
+31fb3e0c,2026-10-13,sarashina3-mini,japanese,,0,0,0,0,10
+31fb3e0c,2026-10-13,sarashina3-mini,knowledge,,0,0,0,0,11
+31fb3e0c,2026-10-13,sarashina3-mini,logic,0.767,30,7,1,2,0
+31fb3e0c,2026-10-13,sarashina3-mini,math,0.667,30,6,2,2,0
+31fb3e0c,2026-10-13,sarashina3-nano,code,0.933,30,8,2,0,0
+31fb3e0c,2026-10-13,sarashina3-nano,instruction,0.733,30,7,1,2,0
+31fb3e0c,2026-10-13,sarashina3-nano,japanese,,0,0,0,0,10
+31fb3e0c,2026-10-13,sarashina3-nano,knowledge,,0,0,0,0,11
+31fb3e0c,2026-10-13,sarashina3-nano,logic,0.867,30,8,2,0,0
+31fb3e0c,2026-10-13,sarashina3-nano,math,1.000,30,10,0,0,0

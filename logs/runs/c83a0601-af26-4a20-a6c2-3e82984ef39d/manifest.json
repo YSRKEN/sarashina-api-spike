@@ -1,0 +1,10 @@
+{
+  "run_id": "c83a0601-af26-4a20-a6c2-3e82984ef39d",
+  "files": [
+    {
+      "path": "fixtures/sample_math.jsonl",
+      "source": "tests/fixtures/sample_math.jsonl",
+      "kind": "questions"
+    }
+  ]
+}

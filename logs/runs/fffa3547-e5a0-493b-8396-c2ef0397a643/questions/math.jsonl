@@ -1,0 +1,10 @@
+{"id": "math-001", "category": "math", "prompt": "りんごが 3 箱あり、1 箱に 14 個ずつ入っています。そこから 5 個食べました。残りは何個ですか。数だけを答えてください。", "expected": "37", "grading": {"method": "numeric", "tolerance": 0}, "intent": "掛け算と引き算の 2 段の文章題を、答えの形式の指示に従って解けるか"}
+{"id": "math-002", "category": "math", "prompt": "時速 48 km で走る自転車は、2 時間 15 分で何 km 進みますか。数だけを答えてください。", "expected": "108", "grading": {"method": "numeric", "tolerance": 0}, "intent": "時間の単位の換算を含む速さの計算"}
+{"id": "math-003", "category": "math", "prompt": "1 から 20 までの整数のうち、3 でも 4 でも割り切れないものはいくつありますか。数だけを答えてください。", "expected": "10", "grading": {"method": "numeric", "tolerance": 0}, "intent": "包除原理を使う数え上げ"}
+{"id": "math-004", "category": "math", "prompt": "1 から 100 までの整数のうち、7 の倍数であり、かつ偶数であるものは何個ありますか。数だけを答えてください。", "expected": "7", "grading": {"method": "numeric", "tolerance": 0}, "intent": "二つの条件を重ねて数え上げられるか（14 の倍数に気づくか）"}
+{"id": "math-005", "category": "math", "prompt": "定価 2,400 円の品物が 2 割引きになっています。さらに消費税 10% がかかるとき、支払う金額は何円ですか。数だけを答えてください。", "expected": "2112", "grading": {"method": "numeric", "tolerance": 0}, "intent": "割引と税の順に百分率を掛け合わせられるか"}
+{"id": "math-006", "category": "math", "prompt": "2 の 20 乗を 1000 で割った余りはいくつですか。数だけを答えてください。", "expected": "576", "grading": {"method": "numeric", "tolerance": 0}, "intent": "大きなべき乗の剰余を正しく計算できるか"}
+{"id": "math-007", "category": "math", "prompt": "初項が 5、公差が 3 の等差数列について、第 1 項から第 20 項までの和を求めてください。数だけを答えてください。", "expected": "670", "grading": {"method": "numeric", "tolerance": 0}, "intent": "等差数列の和の公式を使えるか"}
+{"id": "math-008", "category": "math", "prompt": "2 個のさいころを同時に振るとき、出た目の和が 8 になる確率を既約分数で答えてください。分数だけを答えてください。", "expected": "5/36", "grading": {"method": "regex", "pattern": "5\\s*/\\s*36|\\\\frac\\{5\\}\\{36\\}"}, "intent": "場合の数を数えて確率を既約分数で書けるか"}
+{"id": "math-009", "category": "math", "prompt": "連立方程式 2x + 3y = 13、x − y = −1 を満たす x と y について、x + y の値を求めてください。数だけを答えてください。", "expected": "5", "grading": {"method": "numeric", "tolerance": 0}, "intent": "連立一次方程式を解き、問われた量を答えられるか"}
+{"id": "math-010", "category": "math", "prompt": "5 人の中から 3 人を選び、1 列に並べる並べ方は何通りありますか。数だけを答えてください。", "expected": "60", "grading": {"method": "numeric", "tolerance": 0}, "intent": "順列と組合せを区別できるか"}

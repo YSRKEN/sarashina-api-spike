@@ -1,0 +1,2 @@
+run_id,run_date,model,category,accuracy,answers,all_correct,partial,none_correct,ungraded
+c83a0601-af26-4a20-a6c2-3e82984ef39d,2026-10-31,sarashina3.2-mini-thinking,math,1.000,9,3,0,0,0

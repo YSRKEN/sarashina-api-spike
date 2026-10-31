@@ -7,7 +7,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
-from sarashina_eval.models import MODEL_RPM
+from sarashina_eval.models import MODEL_RPM, reasoning_params
 from sarashina_eval.questions import Question
 
 #: 既定で流すモデル。
@@ -58,7 +58,10 @@ class PlannedRequest:
 
 
 def plan_requests(
-    questions: list[Question], models: tuple[str, ...] = DEFAULT_MODELS, n: int = DEFAULT_N
+    questions: list[Question],
+    models: tuple[str, ...] = DEFAULT_MODELS,
+    n: int = DEFAULT_N,
+    reasoning_effort: str | None = None,
 ) -> list[PlannedRequest]:
     """送る順にリクエストを並べる。1 問ごとに各モデルへ 1 回ずつ送る。
 
@@ -69,6 +72,8 @@ def plan_requests(
         送り先。``MODEL_RPM`` にあるもの。
     n : int
         1 リクエストで受け取る候補数（1〜5）。
+    reasoning_effort : str, optional
+        推論の強さ。思考モデルだけが受け付ける。省略時は本文に入れない。
 
     Returns
     -------
@@ -77,14 +82,15 @@ def plan_requests(
     Raises
     ------
     ValueError
-        ``n`` が範囲外か、知らないモデルのとき。
+        ``n`` が範囲外か、知らないモデルか、推論の強さを受け付けないモデルのとき。
     """
     if not 1 <= n <= 5:
         raise ValueError(f"n は 1〜5（指定は {n}）")
     unknown = [m for m in models if m not in MODEL_RPM]
     if unknown:
         raise ValueError(f"知らないモデル: {', '.join(unknown)}")
-    return [PlannedRequest(m, q, {"n": n}) for q in questions for m in models]
+    extra = reasoning_params(models, reasoning_effort)
+    return [PlannedRequest(m, q, {"n": n, **extra}) for q in questions for m in models]
 
 
 def estimate_seconds(

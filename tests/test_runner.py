@@ -137,10 +137,22 @@ class PlanTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             plan_requests(qs, models=("gpt-x",))
 
+    def test_reasoning_effort_only_for_thinking(self) -> None:
+        qs = load_questions([SAMPLE])
+        plan = plan_requests(qs, models=("sarashina3.2-mini-thinking",), reasoning_effort="high")
+        self.assertEqual({tuple(sorted(r.params.items())) for r in plan}, {(("n", 3), ("reasoning_effort", "high"))})
+        # 指定しなければ本文に入れない（API の既定に任せる）。
+        plan = plan_requests(qs, models=("sarashina3.2-mini-thinking",))
+        self.assertEqual({tuple(r.params) for r in plan}, {("n",)})
+        with self.assertRaises(ValueError):
+            plan_requests(qs, models=("sarashina3.2-mini-thinking", "sarashina3-mini"), reasoning_effort="low")
+        with self.assertRaises(ValueError):
+            plan_requests(qs, models=("sarashina3.2-mini-thinking",), reasoning_effort="max")
+
     def test_estimate_from_rpm(self) -> None:
         qs = load_questions([SAMPLE]) * 1
         many = [q for q in qs for _ in range(5)]  # 15 問
-        est = estimate_seconds(plan_requests(many))
+        est = estimate_seconds(plan_requests(many), {"sarashina3-mini": 6, "sarashina3-nano": 60})
         # mini: 15 件 / 6 RPM -> 3 窓 -> 2 回待つ。nano: 15 件 / 60 RPM -> 待たない。
         self.assertEqual(est, {"sarashina3-mini": 122, "sarashina3-nano": 0})
 
@@ -206,8 +218,21 @@ class CliTest(unittest.TestCase):
         text = out.getvalue()
         self.assertIn("送るリクエスト 6 件", text)
         self.assertIn("math-003", text)
-        self.assertIn("sarashina3-mini    3 件 / 6 RPM -> 約 0 秒", text)
+        self.assertIn("sarashina3-mini    3 件 / 30 RPM -> 約 0 秒", text)
         self.assertEqual(text, format_dry_run(plan_requests(load_questions([SAMPLE]))) + "\n")
+
+    def test_dry_run_with_reasoning_effort(self) -> None:
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = run_cli.main([str(SAMPLE), "--dry-run", "--models", "sarashina3.2-mini-thinking",
+                                 "--reasoning-effort", "medium"])
+        self.assertEqual(code, 0)
+        self.assertIn("reasoning_effort=medium", out.getvalue())
+        err = io.StringIO()
+        with redirect_stderr(err):
+            code = run_cli.main([str(SAMPLE), "--dry-run", "--reasoning-effort", "medium"])
+        self.assertEqual(code, 2)
+        self.assertIn("reasoning_effort", err.getvalue())
 
     def test_resume_reuses_run_id_and_skips_completed(self) -> None:
         out = io.StringIO()

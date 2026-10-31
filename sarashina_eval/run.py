@@ -12,9 +12,11 @@ import argparse
 import sys
 from pathlib import Path
 
+from sarashina_eval.models import REASONING_EFFORTS
 from sarashina_eval.run_log import append_run, run_log_files
 from sarashina_eval.run_snapshot import save_snapshot
 from sarashina_eval.questions import CATEGORIES, QuestionSetError, load_questions
+from sarashina_eval.client_options import timeout_kwargs
 from sarashina_eval.runner import DEFAULT_MODELS, DEFAULT_N, format_dry_run, plan_requests, run_plan
 
 
@@ -29,6 +31,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("paths", nargs="+", type=Path, help="問題集の JSONL かそのディレクトリ")
     p.add_argument("--models", nargs="+", default=list(DEFAULT_MODELS), help="送り先のモデル")
     p.add_argument("--n", type=int, default=DEFAULT_N, help="1 リクエストの候補数（1〜5）")
+    p.add_argument("--reasoning-effort", choices=list(REASONING_EFFORTS), default=None,
+                   help="推論の強さ（思考モデルだけ）。省略時は送らない")
+    p.add_argument("--timeout", type=float, default=None, help="1 リクエストの時間切れの秒数（既定 60）")
     p.add_argument("--category", choices=sorted(CATEGORIES), action="append", help="分野で絞る（複数可）")
     p.add_argument("--dry-run", action="store_true", help="送るリクエストと所要時間の見積もりを出し、送らない")
     p.add_argument("--log-dir", type=Path, default=None, help="記録の置き場（既定は logs/）")
@@ -56,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         questions = load_questions(args.paths)
         if args.category:
             questions = [q for q in questions if q.category in args.category]
-        plan = plan_requests(questions, tuple(args.models), args.n)
+        plan = plan_requests(questions, tuple(args.models), args.n, args.reasoning_effort)
     except QuestionSetError as e:
         print(e, file=sys.stderr)
         return 2
@@ -69,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     # 実際に送るときだけ client を作る（API キーを読むのはここだけ）。
     from sarashina_eval.client import SarashinaClient
 
-    client = SarashinaClient(log_dir=args.log_dir, run_id=args.resume)
+    client = SarashinaClient(log_dir=args.log_dir, run_id=args.resume, **timeout_kwargs(args.timeout))
     log_dir = args.log_dir if args.log_dir is not None else Path(__file__).resolve().parent.parent / "logs"
     # 送る前に、送る対象の問題の写しを残す（あとで同じ中身で採点し直すため）。
     snap = save_snapshot(log_dir, client.run_id, questions=(args.paths, {q.id for q in questions}))

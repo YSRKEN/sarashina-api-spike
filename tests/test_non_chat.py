@@ -175,9 +175,12 @@ class ClientEndpointTest(_ServerCase):
             self.client.translate("あ" * 5001, "ja", "en")
         self.assertEqual(_Handler.received, [])
 
-    def test_translate_window_is_six_per_minute(self) -> None:
+    def test_translate_window_follows_rpm(self) -> None:
+        # 窓の仕組みを見る試験なので、公式の値（30）ではなく 6 に固定する。
+        client = SarashinaClient(FAKE_KEY, base_url=self.base_url, clock=self.clock, log_dir=self.log_dir,
+                                 run_id="run-nc", rpm_by_model={"sarashina3-translate": 6})
         for i in range(7):
-            self.client.translate("x", "en", "ja", question_id=f"t{i}")
+            client.translate("x", "en", "ja", question_id=f"t{i}")
         self.assertEqual(self.clock.sleeps, [61.0])
 
 

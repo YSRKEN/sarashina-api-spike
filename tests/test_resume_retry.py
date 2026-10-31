@@ -77,8 +77,10 @@ class _Base(unittest.TestCase):
         self.tmp.cleanup()
 
     def client(self, run_id: str = "run-1") -> SarashinaClient:
+        # 窓の仕組みを見る試験なので、mini の上限を公式の値（30）ではなく 6 に固定する。
         return SarashinaClient(
-            FAKE_KEY, base_url=self.base_url, clock=self.clock, log_dir=self.log_dir, run_id=run_id
+            FAKE_KEY, base_url=self.base_url, clock=self.clock, log_dir=self.log_dir, run_id=run_id,
+            rpm_by_model={MINI: 6, "sarashina3-nano": 60},
         )
 
     def chat(self, client: SarashinaClient, **kw):

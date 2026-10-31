@@ -7,9 +7,9 @@
 分かったこと:
 
 - 自作の問題集で、6 分野 61 問。公式のベンチマークの再現ではない
-- 問題の多くは Claude（Opus 5.5）が下書きし、依頼者が確かめた
+- 問題の多くは Claude（Opus 5.5）が下書きし、リポジトリの作者が確かめた
 
-問題は `questions/` の JSONL に、分野ごとに 1 ファイルずつ置いてある。Chat 以外のモデルの入力は `inputs/`、Tool Calling の場面は `tool_scenarios/` にある。安全判定（guard）の 18 件のうち、依頼者が書いた 12 件は公開しない（`inputs_private/`。リポジトリに入れていない）。
+問題は `questions/` の JSONL に、分野ごとに 1 ファイルずつ置いてある。Chat 以外のモデルの入力は `inputs/`、Tool Calling の場面は `tool_scenarios/` にある。安全判定（guard）の 18 件のうち、リポジトリの作者が書いた 12 件は公開しない（`inputs_private/`。リポジトリに入れていない）。
 
 問題の多くを Claude が下書きしたので、設問の言い回しが同じ系列の Claude に読み取りやすい形になっているおそれがある。ほかの会社のモデルとの比較で、Claude Haiku 5.5 に有利に働いた可能性を否定できない（[comparison.md](comparison.md)）。
 

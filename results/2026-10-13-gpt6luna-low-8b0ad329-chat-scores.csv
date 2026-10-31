@@ -1,0 +1,7 @@
+run_id,run_date,model,category,accuracy,answers,all_correct,partial,none_correct,ungraded
+gpt6luna-low-8b0ad329,2026-10-13,gpt-6-luna-low,code,1.000,10,10,0,0,0
+gpt6luna-low-8b0ad329,2026-10-13,gpt-6-luna-low,instruction,1.000,10,10,0,0,0
+gpt6luna-low-8b0ad329,2026-10-13,gpt-6-luna-low,japanese,,0,0,0,0,10
+gpt6luna-low-8b0ad329,2026-10-13,gpt-6-luna-low,knowledge,,0,0,0,0,11
+gpt6luna-low-8b0ad329,2026-10-13,gpt-6-luna-low,logic,0.800,10,8,0,2,0
+gpt6luna-low-8b0ad329,2026-10-13,gpt-6-luna-low,math,0.900,10,9,0,1,0

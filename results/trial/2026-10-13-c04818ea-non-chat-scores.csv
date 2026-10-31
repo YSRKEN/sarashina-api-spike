@@ -1,0 +1,9 @@
+run_id,run_date,kind,case_id,model,status,metrics
+c04818ea,2026-10-13,guard,guard-tmp-01,sarashina3-guard,correct,verdict=安全;expected_verdict=安全;categories=;expected_categories=;verdict_ok=True
+c04818ea,2026-10-13,guard,guard-tmp-02,sarashina3-guard,correct,verdict=安全;expected_verdict=安全;categories=;expected_categories=;verdict_ok=True
+c04818ea,2026-10-13,embedding,emb-tmp-01,sarashina3-embedding,correct,min_near=0.9652;max_far=0.723184;margin=0.242016
+c04818ea,2026-10-13,embedding,emb-tmp-02,sarashina3-embedding,correct,min_near=0.838861;max_far=0.64636;margin=0.1925
+c04818ea,2026-10-13,rerank,rerank-tmp-01,sarashina3-rerank,correct,top=1;expected_top=1;order=1 0 2
+c04818ea,2026-10-13,rerank,rerank-tmp-02,sarashina3-rerank,correct,top=0;expected_top=0;order=0 1 2;order_match=True
+c04818ea,2026-10-13,translate,tr-tmp-01,sarashina3-translate,ungraded,
+c04818ea,2026-10-13,translate,tr-tmp-02,sarashina3-translate,ungraded,

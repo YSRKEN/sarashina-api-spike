@@ -5,7 +5,7 @@
 - rerank: 最上位の文書が ``expected_top`` なら正解。``expected_order`` があれば全順位の一致も記録する
 - translate: 人が読むので未採点（``ungraded``）として記録する
 
-本文（応答・訳文）を含む採点結果は ``logs/scores/`` に、本文を入れない得点の CSV は ``reports/`` に出す。
+本文（応答・訳文）を含む採点結果は ``logs/scores/`` に、本文を入れない得点の CSV は ``results/`` に出す。
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from sarashina_eval.non_chat_cases import HARMFUL, KIND_MODELS, SAFE, Case, embedding_ids
+from sarashina_eval.results import scores_csv_path
 from sarashina_eval.score import latest_ok_records
 
 #: 1 組の採点の状態。
@@ -202,32 +203,32 @@ def score_cases(log_dir: Path, run_id: str, cases: list[Case]) -> list[CaseScore
     return out
 
 
-CSV_HEADER = ["kind", "case_id", "model", "status", "metrics"]
+CSV_HEADER = ["run_id", "run_date", "kind", "case_id", "model", "status", "metrics"]
 
 
-def write_outputs(scores: list[CaseScore], run_id: str, scores_dir: Path, reports_dir: Path,
+def write_outputs(scores: list[CaseScore], run_id: str, scores_dir: Path, results_dir: Path,
                   today: date) -> tuple[Path, Path]:
     """採点結果の JSONL（本文つき）と得点の CSV（本文なし）を書く。
 
     Returns
     -------
     tuple of Path
-        ``(<scores_dir>/<run_id>-non-chat.jsonl, <reports_dir>/<today>-<run_id の先頭 8 文字>-non-chat-scores.csv)``。
+        ``(<scores_dir>/<run_id>-non-chat.jsonl, <results_dir>/<today>-<run_id の全部>-non-chat-scores.csv)``。
         ``today`` には実行の最初の送信の UTC 日付を渡す。
     """
     scores_dir.mkdir(parents=True, exist_ok=True)
-    reports_dir.mkdir(parents=True, exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
     jsonl = scores_dir / f"{run_id}-non-chat.jsonl"
     with jsonl.open("w", encoding="utf-8") as f:
         for s in scores:
             f.write(json.dumps(asdict(s), ensure_ascii=False) + "\n")
-    csv_path = reports_dir / f"{today:%Y-%m-%d}-{run_id[:8]}-non-chat-scores.csv"
+    csv_path = scores_csv_path(results_dir, today, run_id, "non-chat")
     with csv_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         w.writerow(CSV_HEADER)
         for s in scores:
             metrics = ";".join(f"{k}={v}" for k, v in s.metrics.items())
-            w.writerow([s.kind, s.case_id, s.model, s.status, metrics])
+            w.writerow([run_id, f"{today:%Y-%m-%d}", s.kind, s.case_id, s.model, s.status, metrics])
     return jsonl, csv_path
 
 

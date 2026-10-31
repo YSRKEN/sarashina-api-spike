@@ -95,7 +95,7 @@ class ScoreUsesSnapshotTest(unittest.TestCase):
 
     def _score(self, *extra: str) -> tuple[int, str]:
         err = io.StringIO()
-        argv = ["--run-id", RUN_ID, "--log-dir", str(self.logs), "--reports-dir", str(self.dir / "reports"), *extra]
+        argv = ["--run-id", RUN_ID, "--log-dir", str(self.logs), "--results-dir", str(self.dir / "results"), *extra]
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err), \
                 mock.patch.object(code_runner, "docker_available", return_value=False):
             code = score.main(argv)

@@ -1,0 +1,3 @@
+run_id,run_date,model,category,accuracy,answers,all_correct,partial,none_correct,ungraded
+8093aac1,2026-10-13,sarashina3-mini,math,0.778,9,2,1,0,0
+8093aac1,2026-10-13,sarashina3-nano,math,1.000,9,3,0,0,0

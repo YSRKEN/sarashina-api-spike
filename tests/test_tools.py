@@ -150,13 +150,14 @@ class ToolsFlowTest(unittest.TestCase):
         done = {k for k, r in tools.latest_records(self.log_dir, "run-2").items() if tools.is_finished(r, 5)}
         self.assertEqual(len(done), 2)
         self.assertEqual(n, 3)
-        reports = self.log_dir / "reports"
+        results = self.log_dir / "results"
         self.assertEqual(tools.main(["score", "--run-id", "run-2", "--log-dir", str(self.log_dir),
-                                     "--scenarios", str(FIXTURE), "--reports-dir", str(reports)]), 0)
-        csvs = list(reports.glob("*-run-2-tools-scores.csv"))
+                                     "--scenarios", str(FIXTURE), "--results-dir", str(results)]), 0)
+        csvs = list(results.glob("*-run-2-tools-scores.csv"))
         self.assertEqual(len(csvs), 1)
         text = csvs[0].read_text(encoding="utf-8")
         self.assertNotIn("最高", text)  # CSV に本文を入れない
+        self.assertEqual(text.splitlines()[0].split(",")[:3], ["run_id", "run_date", "model"])
         self.assertTrue((self.log_dir / "scores" / "run-2-tools.jsonl").is_file())
         runs = [json.loads(l) for l in (self.log_dir / "runs.jsonl").read_text(encoding="utf-8").splitlines()]
         self.assertEqual(runs[-1]["counts"]["passed"], 2)

@@ -1,0 +1,7 @@
+run_id,run_date,model,category,accuracy,answers,all_correct,partial,none_correct,ungraded
+6587cdd3,2026-10-13,sarashina3-mini,instruction,1.000,3,1,0,0,0
+6587cdd3,2026-10-13,sarashina3-mini,logic,0.000,3,0,0,1,0
+6587cdd3,2026-10-13,sarashina3-mini,math,1.000,3,1,0,0,0
+6587cdd3,2026-10-13,sarashina3-nano,instruction,1.000,3,1,0,0,0
+6587cdd3,2026-10-13,sarashina3-nano,logic,0.000,3,0,0,1,0
+6587cdd3,2026-10-13,sarashina3-nano,math,1.000,3,1,0,0,0

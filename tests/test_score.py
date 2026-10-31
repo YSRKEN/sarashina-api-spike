@@ -128,15 +128,18 @@ class ScoreRunTest(unittest.TestCase):
         statuses = [s.status for s in scores if s.question_id == "math-003" and s.model == "m-a"]
         self.assertEqual(statuses, [score.WRONG, score.WRONG, score.EXTRACT_FAILED])
         header, rows = score.summarize(scores, ungraded)
-        by = {r["category"]: r for r in rows}
-        self.assertEqual(by["math"]["m-a:all_correct"], 1)
-        self.assertEqual(by["math"]["m-a:partial"], 1)
-        self.assertEqual(by["math"]["m-a:none_correct"], 1)
-        self.assertEqual(by["math"]["m-a:accuracy"], "0.556")  # 5/9
-        self.assertEqual(by["math"]["m-b:accuracy"], "1.000")
-        self.assertEqual(by["code"]["m-a:ungraded"], 1)
-        self.assertEqual(by["code"]["m-a:answers"], 0)  # 未採点は分母に入らない
-        self.assertEqual(by["code"]["m-a:accuracy"], "")
+        self.assertEqual(header, ["model", "category", "accuracy", "answers", "all_correct", "partial",
+                                  "none_correct", "ungraded"])
+        by = {(r["model"], r["category"]): r for r in rows}  # 1 行が 1 モデル × 1 分野
+        self.assertEqual(len(rows), 4)
+        self.assertEqual(by["m-a", "math"]["all_correct"], 1)
+        self.assertEqual(by["m-a", "math"]["partial"], 1)
+        self.assertEqual(by["m-a", "math"]["none_correct"], 1)
+        self.assertEqual(by["m-a", "math"]["accuracy"], "0.556")  # 5/9
+        self.assertEqual(by["m-b", "math"]["accuracy"], "1.000")
+        self.assertEqual(by["m-a", "code"]["ungraded"], 1)
+        self.assertEqual(by["m-a", "code"]["answers"], 0)  # 未採点は分母に入らない
+        self.assertEqual(by["m-a", "code"]["accuracy"], "")
 
     def test_main_writes_csv_and_jsonl_without_touching_log(self) -> None:
         before = self.log_file.read_bytes()
@@ -148,16 +151,16 @@ class ScoreRunTest(unittest.TestCase):
             for x in self.questions.values()
         ]
         (qdir / "all.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows), encoding="utf-8")
-        reports = self.tmp / "reports"
+        results = self.tmp / "results"
         out = io.StringIO()
         with redirect_stdout(out), mock.patch.object(code_runner, "docker_available", return_value=False):
             code = score.main(["--run-id", "r1", "--log-dir", str(self.logs), "--questions", str(qdir),
-                               "--reports-dir", str(reports)])
+                               "--results-dir", str(results)])
         self.assertEqual(code, 0)
         self.assertIn("未採点", out.getvalue())
         self.assertIn("Docker が使えないため code_tests を飛ばした: 3 答え", out.getvalue())
         self.assertEqual(self.log_file.read_bytes(), before)
-        csv_files = list(reports.glob("*-scores.csv"))
+        csv_files = list(results.glob("*-chat-scores.csv"))
         self.assertEqual(len(csv_files), 1)
         runs = [json.loads(l) for l in (self.logs / "runs.jsonl").read_text(encoding="utf-8").splitlines()]
         self.assertEqual(len(runs), 1)
@@ -168,7 +171,11 @@ class ScoreRunTest(unittest.TestCase):
         text = csv_files[0].read_text(encoding="utf-8")
         self.assertNotIn("km", text)  # 出力本文を CSV に入れない
         table = list(csv.DictReader(io.StringIO(text)))
-        self.assertEqual([r["category"] for r in table], ["code", "math"])
+        self.assertEqual(list(table[0])[:4], ["run_id", "run_date", "model", "category"])
+        self.assertEqual({(r["run_id"], r["run_date"]) for r in table}, {("r1", csv_files[0].name[:10])})  # 名前の日付と同じ
+        self.assertEqual([(r["model"], r["category"]) for r in table],
+                         [("m-a", "code"), ("m-a", "math"), ("m-b", "code"), ("m-b", "math")])
+        self.assertTrue(csv_files[0].name.endswith("-r1-chat-scores.csv"))
         jl = [json.loads(l) for l in (self.logs / "scores" / "r1.jsonl").read_text(encoding="utf-8").splitlines()]
         self.assertEqual(len(jl), 15)
         self.assertEqual(set(jl[0]), {"run_id", "model", "question_id", "category", "method",
@@ -199,7 +206,7 @@ class CodeTestsScoringTest(unittest.TestCase):
         self.assertEqual([(s.status, s.extracted, s.tests_passed, s.tests_total) for s in scores], [
             (score.CORRECT, "2/2", 2, 2), (score.WRONG, "0/2", 0, 2), (score.EXTRACT_FAILED, None, None, None)])
         _, rows = score.summarize(scores, ungraded)
-        self.assertEqual(rows[0]["m:accuracy"], "0.333")
+        self.assertEqual(rows[0]["accuracy"], "0.333")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,7 @@
+run_id,run_date,model,category,accuracy,answers,all_correct,partial,none_correct,ungraded
+haiku55-low-bcb885f0,2026-10-13,claude-haiku-5-5-low,code,1.000,10,10,0,0,0
+haiku55-low-bcb885f0,2026-10-13,claude-haiku-5-5-low,instruction,1.000,10,10,0,0,0
+haiku55-low-bcb885f0,2026-10-13,claude-haiku-5-5-low,japanese,,0,0,0,0,10
+haiku55-low-bcb885f0,2026-10-13,claude-haiku-5-5-low,knowledge,,0,0,0,0,11
+haiku55-low-bcb885f0,2026-10-13,claude-haiku-5-5-low,logic,1.000,10,10,0,0,0
+haiku55-low-bcb885f0,2026-10-13,claude-haiku-5-5-low,math,1.000,10,10,0,0,0

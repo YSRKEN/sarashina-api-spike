@@ -59,7 +59,7 @@
 | Tool Calling の測り直し（mini・nano、3 条件） | `ca2444ca` | 2026-10-31 | `2026-10-31-ca2444ca-…-tools-scores.csv` |
 | Tool Calling（3.2 mini thinking、指定なし・low・medium・high、3 条件） | `0ab6bf33`・`ca4386f0`・`a4582eec`・`28734009` | 2026-10-31 | 同じ形の名前 |
 
-2026-10-31 の実行は、時間切れを `--resume` で 1 回だけ送り直した。名前の「…」は実行 ID の残り。条件（問題集・temperature・1 問 3 回・時間切れ 60 秒）は 2026-10-13 と同じで、3.2 mini thinking だけ推論の強さ（`reasoning_effort`）を変えた。このときはコードを採点しておらず、日本語と知識の判定も付けていない。
+2026-10-31 の実行は、時間切れを `--resume` で 1 回だけ送り直した。名前の「…」は実行 ID の残り。条件（問題集・temperature・1 問 3 回・時間切れ 60 秒）は 2026-10-13 と同じで、3.2 mini thinking だけ推論の強さ（`reasoning_effort`）を変えた。コードは、Docker の代わりに WSL のコンテナ（wslc）で採点した（環境変数 `SARASHINA_CONTAINER_CLI` で道具を差し替える）。wslc には読み取り専用の指定が無いので、nobody のユーザーで動かし、一時の置き場を読み取り専用で覆って書き込みを防いだ。2026-10-13 の実行を wslc で採点し直すと Docker と同じ値になった。日本語と知識の判定はまだ付けていない。
 
 本番の前に、仕組みを確かめるための試しの実行を 4 回行った。その結果は [history.md](history.md) に、得点の CSV は `results/trial/` にある。
 

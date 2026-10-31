@@ -1,5 +1,5 @@
 run_id,run_date,model,category,accuracy,answers,all_correct,partial,none_correct,ungraded
-27571e92-6ea9-497e-a248-38282b296911,2026-10-31,sarashina3.2-mini-thinking,code,,0,0,0,0,10
+27571e92-6ea9-497e-a248-38282b296911,2026-10-31,sarashina3.2-mini-thinking,code,1.000,30,10,0,0,0
 27571e92-6ea9-497e-a248-38282b296911,2026-10-31,sarashina3.2-mini-thinking,instruction,1.000,30,10,0,0,0
 27571e92-6ea9-497e-a248-38282b296911,2026-10-31,sarashina3.2-mini-thinking,japanese,,0,0,0,0,10
 27571e92-6ea9-497e-a248-38282b296911,2026-10-31,sarashina3.2-mini-thinking,knowledge,,0,0,0,0,10

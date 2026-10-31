@@ -14,10 +14,12 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import secrets
 import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 #: 実行に使うイメージ。
@@ -30,6 +32,26 @@ TIMEOUT_SEC = 10.0
 DOCKER_LIMITS: tuple[str, ...] = (
     "--network", "none", "--read-only", "--memory", "256m", "--cpus", "1", "--pids-limit", "64",
 )
+#: wslc（WSL のコンテナの道具）での制限。``--read-only`` と ``--pids-limit`` が無いので、
+#: 書き込みは nobody で動かして読み取り専用の tmpfs で一時の置き場を覆い、プロセス数は ulimit で絞る。
+WSLC_LIMITS: tuple[str, ...] = (
+    "--network", "none", "--memory", "256m", "--cpus", "1", "--ulimit", "nproc=64",
+    "-u", "65534:65534", "--tmpfs", "/tmp:ro", "--tmpfs", "/var/tmp:ro", "--tmpfs", "/dev/shm:ro",
+)
+#: コンテナを動かす道具を差し替える環境変数。空なら ``docker``。
+CLI_ENV = "SARASHINA_CONTAINER_CLI"
+
+
+def container_cli() -> tuple[str, tuple[str, ...]]:
+    """コンテナを動かす道具と、その制限の引数を返す。
+
+    Returns
+    -------
+    tuple
+        ``(道具のパス, 制限の引数)``。道具の名前に ``wslc`` を含めば wslc 用の制限。
+    """
+    cli = os.environ.get(CLI_ENV, "").strip() or "docker"
+    return cli, (WSLC_LIMITS if "wslc" in Path(cli).name.lower() else DOCKER_LIMITS)
 
 _FENCE = re.compile(r"```[ \t]*([A-Za-z0-9_+-]*)[^\n]*\n(.*?)```", re.DOTALL)
 
@@ -162,7 +184,7 @@ def docker_available(timeout: float = 10.0) -> bool:
     bool
     """
     try:
-        r = subprocess.run(["docker", "info"], capture_output=True, timeout=timeout)
+        r = subprocess.run([container_cli()[0], "info"], capture_output=True, timeout=timeout)
     except (OSError, subprocess.TimeoutExpired):
         return False
     return r.returncode == 0
@@ -188,12 +210,13 @@ def run_tests(code: str, params: dict[str, Any], timeout: float = TIMEOUT_SEC) -
     tests = params["tests"]
     mark = "__RESULT_" + secrets.token_hex(16) + "__"
     name = "sarashina-eval-" + secrets.token_hex(6)
-    cmd = ["docker", "run", "--rm", "-i", "--name", name, *DOCKER_LIMITS, IMAGE, "python", "-I", "-"]
+    cli, limits = container_cli()
+    cmd = [cli, "run", "--rm", "-i", "--name", name, *limits, IMAGE, "python", "-I", "-"]
     script = build_script(code, params["function"], tests, mark)
     try:
         r = subprocess.run(cmd, input=script, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
-        subprocess.run(["docker", "kill", name], capture_output=True, timeout=30)
+        subprocess.run([cli, "kill", name], capture_output=True, timeout=30)
         return CodeResult(0, len(tests), f"timeout: {timeout:g} 秒を超えた")
     for line in reversed(r.stdout.splitlines()):
         if line.startswith(mark):

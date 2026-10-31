@@ -8,7 +8,6 @@
       "run_id": "9fd0d6b8-8ef6-45fc-9c4d-e0804b35267e",
       "heading": "2026-10-31",
       "unscored": [
-        "code",
         "japanese",
         "knowledge"
       ]
@@ -17,7 +16,6 @@
       "run_id": "fffa3547-e5a0-493b-8396-c2ef0397a643",
       "heading": "指定なし",
       "unscored": [
-        "code",
         "japanese",
         "knowledge"
       ]
@@ -26,7 +24,6 @@
       "run_id": "27571e92-6ea9-497e-a248-38282b296911",
       "heading": "low",
       "unscored": [
-        "code",
         "japanese",
         "knowledge"
       ]
@@ -35,7 +32,6 @@
       "run_id": "9ed2e47f-93a2-410d-abb0-58a1e11a78ee",
       "heading": "medium",
       "unscored": [
-        "code",
         "japanese",
         "knowledge"
       ]
@@ -44,7 +40,6 @@
       "run_id": "25ab732a-ee9b-4ff1-ab30-8810586a7bbd",
       "heading": "high",
       "unscored": [
-        "code",
         "japanese",
         "knowledge"
       ]

@@ -123,3 +123,40 @@ class DockerRunTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ContainerCliTest(unittest.TestCase):
+    """コンテナを動かす道具を環境変数で差し替える（Docker の無い Windows では wslc）。"""
+
+    def _cmds(self, env: dict[str, str]) -> list[list[str]]:
+        from unittest import mock
+
+        seen: list[list[str]] = []
+
+        def fake_run(cmd, **kw):
+            seen.append(cmd)
+            return mock.Mock(returncode=0, stdout="", stderr="")
+
+        with mock.patch.dict("os.environ", env, clear=False), \
+                mock.patch.object(code_runner.subprocess, "run", fake_run):
+            code_runner.docker_available()
+            code_runner.run_tests("def f(x):\n    return x\n", {"function": "f", "tests": [{"input": [1], "output": 1}]})
+        return seen
+
+    def test_default_is_docker_with_full_limits(self) -> None:
+        info, run = self._cmds({"SARASHINA_CONTAINER_CLI": ""})
+        self.assertEqual(info, ["docker", "info"])
+        self.assertEqual(run[:2], ["docker", "run"])
+        for flag in ("--read-only", "--pids-limit", "--network"):
+            self.assertIn(flag, run)
+
+    def test_wslc_uses_its_own_flags(self) -> None:
+        wslc = r"C:\Program Files\WSL\wslc.exe"
+        info, run = self._cmds({"SARASHINA_CONTAINER_CLI": wslc})
+        self.assertEqual(info, [wslc, "info"])
+        self.assertEqual(run[:2], [wslc, "run"])
+        # wslc に無い --read-only と --pids-limit は渡さず、プロセス数は ulimit で絞る。
+        self.assertNotIn("--read-only", run)
+        self.assertNotIn("--pids-limit", run)
+        self.assertIn("nproc=64", run)
+        self.assertEqual(run[run.index("--network") + 1], "none")

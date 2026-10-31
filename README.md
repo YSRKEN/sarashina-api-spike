@@ -72,7 +72,12 @@ README の得点表は、`results/readme-runs.json` に載せる実行を書い�
 
 ## ライセンスと出力の扱い
 
-文書は CC BY 4.0 で公開する。ただし、次のものはこのライセンスの対象外である。
+| 対象 | ライセンス |
+|---|---|
+| コード（`sarashina_eval/`・`scripts/`・`tests/`） | MIT（[LICENSE](LICENSE)） |
+| 文書（README・`docs/`・`GLOSSARY.md`）と、問題集・入力（`questions/`・`inputs/`・`tool_scenarios/`）、得点の CSV（`results/`） | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.ja) |
+
+ただし、次のものはどちらのライセンスの対象外である。
 
 - 文書に引いたモデルの答え（「B」「HELLO」「690」や訳文など）。Sarashina・Claude・GPT-6 Luna それぞれの出力である
 - Tool Calling でツールが返した内容（架空のお店・記事・天気）。この検証のために作った架空のものである

@@ -40,9 +40,9 @@ def build_parser() -> argparse.ArgumentParser:
         s.add_argument("--log-dir", type=Path, default=ROOT / "logs")
         s.add_argument("--note", default=None, help="この実行・採点の目的（logs/runs.jsonl に残す）")
     r = sub.choices["run"]
-    r.add_argument("--dry-run", action="store_true", help="要求数と所要時間の見積もりを出し、送らない")
+    r.add_argument("--dry-run", action="store_true", help="リクエスト数と所要時間の見積もりを出し、送らない")
     r.add_argument("--resume", metavar="RUN_ID", default=None,
-                   help="この run_id を再開し、HTTP 200 で済んだ要求を送らない")
+                   help="この run_id を再開し、HTTP 200 で済んだリクエストを送らない")
     s = sub.choices["score"]
     s.add_argument("--run-id", required=True)
     s.add_argument("--scores-dir", type=Path, default=None, help="既定は <log-dir>/scores")

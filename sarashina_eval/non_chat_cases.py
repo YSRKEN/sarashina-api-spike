@@ -1,4 +1,4 @@
-"""Chat 以外の 4 モデル（guard・embedding・rerank・translate）の入力の組を読み、送る要求を並べる。
+"""Chat 以外の 4 モデル（guard・embedding・rerank・translate）の入力の組を読み、送るリクエストを並べる。
 
 入力はモデルごとの JSONL（``<置き場>/<種類>.jsonl``、種類は ``guard``・``embedding``・
 ``rerank``・``translate``）。公開する ``inputs/`` と、公開しない ``inputs_private/``
@@ -80,7 +80,7 @@ class Case:
 
 @dataclass(frozen=True)
 class PlannedCall:
-    """送る予定の 1 要求。
+    """送る予定の 1 リクエスト。
 
     Attributes
     ----------
@@ -206,7 +206,7 @@ def embedding_ids(case: Case) -> list[tuple[str, str]]:
 
 
 def plan_calls(cases: list[Case]) -> list[PlannedCall]:
-    """入力の組から、送る要求を並べる。
+    """入力の組から、送るリクエストを並べる。
 
     Parameters
     ----------
@@ -241,7 +241,7 @@ def plan_calls(cases: list[Case]) -> list[PlannedCall]:
 
 
 def send_call(client: Any, call: PlannedCall) -> dict[str, Any]:
-    """1 要求を ``client`` のメソッドで送り、記録を返す。"""
+    """1 リクエストを ``client`` のメソッドで送り、記録を返す。"""
     return getattr(client, call.method)(*call.args, question_id=call.question_id, **call.kwargs)
 
 
@@ -256,11 +256,11 @@ def estimate_seconds(plan: list[PlannedCall], rpm_by_model: dict[str, int] | Non
 
 
 def format_dry_run(plan: list[PlannedCall], rpm_by_model: dict[str, int] | None = None) -> str:
-    """``--dry-run`` で出す、要求数と所要時間の見積もりの文を作る（本文は出さない）。"""
+    """``--dry-run`` で出す、リクエスト数と所要時間の見積もりの文を作る（本文は出さない）。"""
     rpm = rpm_by_model or MODEL_RPM
     counts = Counter(c.model for c in plan)
     est = estimate_seconds(plan, rpm)
-    lines = [f"送る要求 {len(plan)} 件（実際には送らない）:"]
+    lines = [f"送るリクエスト {len(plan)} 件（実際には送らない）:"]
     for i, c in enumerate(plan, start=1):
         lines.append(f"  {i:>3}. {c.model:<22} {c.question_id}")
     lines.append("所要時間の見積もり（窓待ちのみ。応答の時間は含めない）:")

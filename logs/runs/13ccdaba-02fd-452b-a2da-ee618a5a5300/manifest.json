@@ -1,0 +1,30 @@
+{
+  "run_id": "13ccdaba-02fd-452b-a2da-ee618a5a5300",
+  "files": [
+    {
+      "path": "inputs/guard.jsonl",
+      "source": "inputs/guard.jsonl",
+      "kind": "inputs"
+    },
+    {
+      "path": "inputs_private/guard.jsonl",
+      "source": "inputs_private/guard.jsonl",
+      "kind": "inputs"
+    },
+    {
+      "path": "inputs/embedding.jsonl",
+      "source": "inputs/embedding.jsonl",
+      "kind": "inputs"
+    },
+    {
+      "path": "inputs/rerank.jsonl",
+      "source": "inputs/rerank.jsonl",
+      "kind": "inputs"
+    },
+    {
+      "path": "inputs/translate.jsonl",
+      "source": "inputs/translate.jsonl",
+      "kind": "inputs"
+    }
+  ]
+}

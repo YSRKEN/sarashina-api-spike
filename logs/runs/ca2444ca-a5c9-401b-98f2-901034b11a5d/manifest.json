@@ -1,0 +1,10 @@
+{
+  "run_id": "ca2444ca-a5c9-401b-98f2-901034b11a5d",
+  "files": [
+    {
+      "path": "tool_scenarios/basic.jsonl",
+      "source": "tool_scenarios/basic.jsonl",
+      "kind": "questions"
+    }
+  ]
+}

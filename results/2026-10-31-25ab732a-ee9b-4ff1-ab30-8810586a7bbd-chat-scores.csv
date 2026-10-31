@@ -1,0 +1,7 @@
+run_id,run_date,model,category,accuracy,answers,all_correct,partial,none_correct,ungraded
+25ab732a-ee9b-4ff1-ab30-8810586a7bbd,2026-10-31,sarashina3.2-mini-thinking,code,,0,0,0,0,10
+25ab732a-ee9b-4ff1-ab30-8810586a7bbd,2026-10-31,sarashina3.2-mini-thinking,instruction,1.000,30,10,0,0,0
+25ab732a-ee9b-4ff1-ab30-8810586a7bbd,2026-10-31,sarashina3.2-mini-thinking,japanese,,0,0,0,0,10
+25ab732a-ee9b-4ff1-ab30-8810586a7bbd,2026-10-31,sarashina3.2-mini-thinking,knowledge,,0,0,0,0,10
+25ab732a-ee9b-4ff1-ab30-8810586a7bbd,2026-10-31,sarashina3.2-mini-thinking,logic,0.767,30,7,2,1,0
+25ab732a-ee9b-4ff1-ab30-8810586a7bbd,2026-10-31,sarashina3.2-mini-thinking,math,1.000,30,10,0,0,0

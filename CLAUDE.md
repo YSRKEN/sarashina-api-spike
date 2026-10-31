@@ -14,5 +14,5 @@ See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context: `CONTEXT.md` and `docs/adr/` at the root.
+Single-context: `GLOSSARY.md` and `docs/adr/` at the root.
 See `docs/agents/domain.md`.
